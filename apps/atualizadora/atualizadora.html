@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Atualização de Contribuições</title>
+    <!-- Carrega o Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        textarea {
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
+    <main class="w-full max-w-6xl bg-white rounded-xl shadow-2xl p-6 md:p-10">
+        
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Calculadora de Atualização de Contribuições</h1>
+            <p class="text-gray-600">Cole os dados nos campos abaixo para calcular a atualização monetária.</p>
+        </header>
+
+        <!-- Mensagens de Erro e Alerta -->
+        <div id="errorDiv" class="hidden bg-red-100 border border-red-300 text-red-800 p-4 rounded-lg mb-6">
+            <p class="font-bold">Atenção:</p>
+            <p id="errorMessage" class="text-sm"></p>
+        </div>
+
+        <div id="warningDiv" class="hidden bg-amber-100 border border-amber-300 text-amber-800 p-4 rounded-lg mb-6">
+            <p class="font-bold">Competências sem fator encontrado:</p>
+            <p id="warningMessage" class="text-sm"></p>
+        </div>
+
+        <!-- Seção de Entradas de Texto -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Campo 1: Fatores de Conversão -->
+            <div>
+                <label for="fatoresInput" class="block text-lg font-semibold text-gray-700 mb-2">1. Fatores de Conversão</label>
+                <textarea id="fatoresInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" placeholder="Exemplos:&#10;01/07/1994 11,537551&#10;jan/95 10,123456"></textarea>
+                <p class="text-xs text-gray-500 mt-1">Aceita: <code class="font-mono bg-gray-200 px-1 rounded">M/AA</code>, <code class="font-mono bg-gray-200 px-1 rounded">DD/MM/AAAA</code> ou <code class="font-mono bg-gray-200 px-1 rounded">mmm/AA</code></p>
+            </div>
+
+            <!-- Campo 2: Contribuições -->
+            <div>
+                <label for="contribuicoesInput" class="block text-lg font-semibold text-gray-700 mb-2">2. Salários de Contribuição</label>
+                <textarea id="contribuicoesInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 font-mono text-sm" placeholder="Exemplos:&#10;15/07/2012 1500,10&#10;fev/95 800,00"></textarea>
+                <p class="text-xs text-gray-500 mt-1">Mesmo formato da lista de fatores. O dia será ignorado.</p>
+            </div>
+        </section>
+
+        <!-- Botão de Calcular -->
+        <div class="text-center mb-8">
+            <button id="calcularBtn" class="w-full md:w-1/2 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 ease-in-out text-lg">
+                Calcular Atualização
+            </button>
+        </div>
+
+        <!-- Seção de Resultados -->
+        <section id="resultadosDiv" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Resultados da Atualização</h2>
+            
+            <div>
+                <label for="resultadoOutput" class="block text-lg font-semibold text-gray-700 mb-2">Valores Atualizados</label>
+                <textarea id="resultadoOutput" readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 shadow-inner font-mono text-sm"></textarea>
+            </div>
+
+            <div class="text-center mt-6">
+                <button id="downloadBtn" class="bg-green-600 text-white font-bold py-2 px-5 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">
+                    Download Resultado (.txt)
+                </button>
+            </div>
+        </section>
+
+        <footer class="mt-8 pt-4 border-t border-gray-200">
+            <p class="text-center text-xs text-gray-400">
+                v1.3 (Compilado em: 02/03/2026 09:36)
+            </p>
+        </footer>
+    </main>
+
+    <script>
+        const mesesMap = {
+            'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
+            'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
+        };
+
+        const fatoresInput = document.getElementById('fatoresInput');
+        const contribuicoesInput = document.getElementById('contribuicoesInput');
+        const calcularBtn = document.getElementById('calcularBtn');
+        const resultadosDiv = document.getElementById('resultadosDiv');
+        const resultadoOutput = document.getElementById('resultadoOutput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorDiv = document.getElementById('errorDiv');
+        const errorMessage = document.getElementById('errorMessage');
+        const warningDiv = document.getElementById('warningDiv');
+        const warningMessage = document.getElementById('warningMessage');
+
+        function normalizarData(mesStr, anoStr) {
+            let mes = mesStr.toLowerCase().trim();
+            // Se for texto (jan, fev...), converte para número
+            if (mesesMap[mes]) {
+                mes = mesesMap[mes];
+            } else {
+                mes = mes.padStart(2, '0');
+            }
+
+            let ano = anoStr.trim();
+            if (ano.length === 2) {
+                const anoNum = parseInt(ano, 10);
+                ano = anoNum >= 70 ? `19${ano}` : `20${ano}`;
+            }
+            return `${mes}/${ano}`;
+        }
+
+        /**
+         * Analisa a linha tentando dois formatos:
+         * 1. DD/MM/AAAA (ou DD/mmm/AA)
+         * 2. MM/AAAA (ou mmm/AA)
+         */
+        function parseLinha(linha) {
+            const linhaLimpa = linha.trim();
+            
+            // Regex para DD/MM/AAAA ou DD/mmm/AA
+            // Grupo 1: Dia (ignorável)
+            // Grupo 2: Mês (numérico ou texto)
+            // Grupo 3: Ano (2 ou 4 dígitos)
+            // Grupo 4: Valor
+            const regexComDia = /^(\d{1,2})\/(\d{1,2}|[a-zA-Z]{3})\/(\d{2}|\d{4})\s+(.*)$/;
+            
+            // Regex para MM/AAAA ou mmm/AA
+            const regexSemDia = /^(\d{1,2}|[a-zA-Z]{3})\/(\d{2}|\d{4})\s+(.*)$/;
+
+            let match = linhaLimpa.match(regexComDia);
+            if (match) {
+                const competencia = normalizarData(match[2], match[3]);
+                const valorStr = match[4].trim().replace(/\./g, '').replace(',', '.');
+                const valor = parseFloat(valorStr);
+                return { competencia, valor };
+            }
+
+            match = linhaLimpa.match(regexSemDia);
+            if (match) {
+                const competencia = normalizarData(match[1], match[2]);
+                const valorStr = match[3].trim().replace(/\./g, '').replace(',', '.');
+                const valor = parseFloat(valorStr);
+                return { competencia, valor };
+            }
+
+            return null;
+        }
+
+        function parseFatores(texto) {
+            const map = new Map();
+            const linhas = texto.split('\n');
+            for (const linha of linhas) {
+                const dados = parseLinha(linha);
+                if (dados && !isNaN(dados.valor)) {
+                    map.set(dados.competencia, dados.valor);
+                }
+            }
+            return map;
+        }
+
+        function parseContribuicoes(texto) {
+            const lista = [];
+            const linhas = texto.split('\n');
+            for (const linha of linhas) {
+                const dados = parseLinha(linha);
+                if (dados && !isNaN(dados.valor)) {
+                    lista.push(dados);
+                }
+            }
+            return lista;
+        }
+
+        function hideMessages() {
+            errorDiv.classList.add('hidden');
+            warningDiv.classList.add('hidden');
+        }
+
+        calcularBtn.addEventListener('click', () => {
+            hideMessages();
+            
+            const fatoresMap = parseFatores(fatoresInput.value);
+            const contribuicoes = parseContribuicoes(contribuicoesInput.value);
+
+            if (fatoresMap.size === 0 || contribuicoes.length === 0) {
+                errorDiv.classList.remove('hidden');
+                errorMessage.textContent = "Verifique os dados de entrada. Certifique-se de que os formatos estão corretos.";
+                return;
+            }
+
+            const resultados = [];
+            const faltantes = [];
+
+            for (const item of contribuicoes) {
+                const fator = fatoresMap.get(item.competencia);
+                
+                if (fator === undefined) {
+                    faltantes.push(item.competencia);
+                } else {
+                    const valorAtualizado = item.valor * fator;
+                    resultados.push(`${item.competencia} ${valorAtualizado.toFixed(2).replace('.', ',')}`);
+                }
+            }
+
+            if (faltantes.length > 0) {
+                warningDiv.classList.remove('hidden');
+                warningMessage.innerHTML = `As seguintes competências <strong>não possuem fator de conversão</strong> correspondente e foram ignoradas no cálculo:<br>${faltantes.join(', ')}`;
+            }
+
+            if (resultados.length > 0) {
+                resultadoOutput.value = resultados.join('\n');
+                resultadosDiv.classList.remove('hidden');
+            } else {
+                resultadosDiv.classList.add('hidden');
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const blob = new Blob([resultadoOutput.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contribuicoes_atualizadas.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
