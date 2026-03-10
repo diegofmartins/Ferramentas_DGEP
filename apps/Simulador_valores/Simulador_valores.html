@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Proventos de Aposentadoria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; 
+        }
+        /* Ajuste de estilo para mobile */
+        @media (max-width: 767px) {
+            .grid-cols-1.md\:grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Estilos de Impressão */
+        @media print {
+            body > div:not(#report-view) {
+                display: none; /* Esconde a interface principal para impressão */
+            }
+            #report-view {
+                display: block !important;
+                position: static !important;
+                padding: 0 !important;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg max-w-5xl mx-auto">
+            <!-- Cabeçalho Alinhado à Esquerda -->
+            <div class="flex flex-col sm:flex-row justify-between items-start mb-6 sm:mb-8 border-b pb-4">
+                 <div>
+                    <h1 class="text-3xl font-bold text-gray-700">Simulador de Proventos de Aposentadoria</h1>
+                    <p class="text-gray-500 mt-1">RPPS - Câmara Municipal de Curitiba</p>
+                 </div>
+                 <button id="clear-data-btn" class="mt-4 sm:mt-0 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                    Limpar Dados
+                </button>
+            </div>
+
+            <!-- Formulário de Entrada de Dados -->
+            <form id="retirement-form" class="space-y-6 md:space-y-8">
+                <!-- Mensagens de Erro -->
+                <div id="error-messages" class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                    <span class="font-medium">Erro de Validação!</span> Por favor, corrija os seguintes problemas:
+                    <ul class="mt-1.5 list-disc list-inside">
+                        <!-- Erros serão inseridos aqui -->
+                    </ul>
+                </div>
+
+                <!-- SEÇÃO DE DADOS PRINCIPAIS REORGANIZADA -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- NOME E MATRÍCULA -->
+                    <div class="md:col-span-3">
+                        <label for="server-name" class="block text-sm font-medium text-gray-700 mb-1">Nome do Servidor (Opcional)</label>
+                        <input type="text" id="server-name" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div>
+                        <label for="server-id" class="block text-sm font-medium text-gray-700 mb-1">Matrícula (Opcional)</label>
+                        <input type="text" id="server-id" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                    </div>
+
+                    <!-- DATAS E SEXO -->
+                    <div>
+                        <label for="birth-date" class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                        <input type="date" id="birth-date" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" required>
+                    </div>
+                    <div>
+                        <label for="admission-date" class="block text-sm font-medium text-gray-700 mb-1">Data de Admissão</label>
+                        <input type="date" id="admission-date" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" required>
+                    </div>
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                        <select id="gender" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                        </select>
+                    </div>
+                    <div class="hidden md:block"></div> <!-- Espaçador para alinhar -->
+
+                    <!-- CARREIRA E FAIXA -->
+                    <div class="md:col-span-2">
+                        <label for="career" class="block text-sm font-medium text-gray-700 mb-1">Carreira</label>
+                        <select id="career" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <!-- Opções de carreira serão preenchidas por JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="career-level" class="block text-sm font-medium text-gray-700 mb-1">Nível da Carreira</label>
+                        <select id="career-level" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <option value="medio">Nível Médio</option>
+                            <option value="superior">Nível Superior</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="current-career-band-index" class="block text-sm font-medium text-gray-700 mb-1">Faixa Atual da Carreira (Para Projeção)</label>
+                        <select id="current-career-band-index" class="form-input w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <option value="">Calcular Automaticamente</option>
+                            <!-- Opções de I a XXXVI serão preenchidas por JavaScript -->
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Se selecionado, a progressão futura começará a partir desta faixa.</p>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO ATS MANUAL -->
+                <div class="space-y-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h2 class="text-xl font-semibold text-red-800 mb-2">Adicionais por Tempo de Serviço (ATS)</h2>
+                    <p class="text-sm text-red-700">Informe a situação atual para projeção futura. Caso não informe, será calculado a partir da Data de Admissão.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                           <label for="last-ats-concession" class="block text-sm font-medium text-gray-700 mb-1">Data da Última Concessão de ATS</label>
+                           <input type="date" id="last-ats-concession" class="form-input w-full p-2 border rounded-md">
+                        </div>
+                        <div>
+                           <label for="last-ats-number" class="block text-sm font-medium text-gray-700 mb-1">Nº do Último ATS Concedido (1º, 2º, etc.)</label>
+                           <input type="number" id="last-ats-number" placeholder="0" class="form-input w-full p-2 border rounded-md" min="0" max="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO DE BASE DE CÁLCULO HISTÓRICA -->
+                <div class="space-y-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-2">Base de Contribuição Histórica (MM/AAAA VALOR)</h2>
+                    <p class="text-sm text-gray-600">Cole aqui o histórico de Salários de Contribuição. O simulador projetará os cálculos a partir do mês seguinte ao último informado.</p>
+                    <textarea id="historical-data" rows="6" class="form-input w-full p-3 border rounded-lg font-mono text-sm" placeholder="Exemplo:&#10;07/2012 2316,40&#10;08/2012 2432,22&#10;..."></textarea>
+                </div>
+
+                <!-- Seção de Incorporação de Tempo ESTÁTICA E COMPACTA -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Incorporação de Tempo de Contribuição</h2>
+                    <p class="text-sm text-gray-600 mb-3">Informe abaixo o tempo a ser incorporado, escolhendo Anos/Meses OU Dias para cada tipo.</p>
+
+                    <!-- LINHA 1: APENAS CONTRIBUIÇÃO -->
+                    <div class="inc-entry p-3 bg-gray-50 rounded-lg border mb-4" id="inc-contribution-only">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-2">Apenas para tempo de contribuição</h3>
+                        <div class="grid grid-cols-6 lg:grid-cols-10 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Anos</label>
+                                <input type="number" placeholder="0" class="inc-years w-full p-2 border rounded-md" min="0" data-inc-type="contribution_only">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Meses</label>
+                                <input type="number" placeholder="0" class="inc-months w-full p-2 border rounded-md" min="0" max="11" data-inc-type="contribution_only">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Dias</label>
+                                <input type="number" placeholder="0" class="inc-days w-full p-2 border rounded-md" min="0" data-inc-type="contribution_only">
+                            </div>
+                            <div class="col-span-4 lg:col-span-4">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Valor Total (R$)</label>
+                                <input type="text" placeholder="0,00" class="inc-value w-full p-2 border rounded-md" data-inc-type="contribution_only">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LINHA 2: TODOS OS EFEITOS -->
+                    <div class="inc-entry p-3 bg-gray-50 rounded-lg border" id="inc-all-effects">
+                        <h3 class="font-semibold text-sm text-gray-700 mb-2">Para todos os efeitos</h3>
+                        <div class="grid grid-cols-6 lg:grid-cols-10 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Anos</label>
+                                <input type="number" placeholder="0" class="inc-years w-full p-2 border rounded-md" min="0" data-inc-type="all_effects">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Meses</label>
+                                <input type="number" placeholder="0" class="inc-months w-full p-2 border rounded-md" min="0" max="11" data-inc-type="all_effects">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Dias</label>
+                                <input type="number" placeholder="0" class="inc-days w-full p-2 border rounded-md" min="0" data-inc-type="all_effects">
+                            </div>
+                            <div class="col-span-4 lg:col-span-4">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Valor Total (R$)</label>
+                                <input type="text" placeholder="0,00" class="inc-value w-full p-2 border rounded-md" data-inc-type="all_effects">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- FIM Seção de Incorporação de Tempo ESTÁTICA E COMPACTA -->
+
+
+                <!-- Seção de Estímulos Acadêmicos -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Gratificações de Estímulo Acadêmico</h2>
+                    <div id="academic-stimulus-container" class="space-y-4">
+                        <!-- Entradas de estímulos serão adicionadas aqui -->
+                    </div>
+                    <button type="button" id="add-stimulus-btn" class="mt-4 bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Adicionar Estímulo
+                    </button>
+                </div>
+
+                <!-- Seção de Função Gratificada -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Funções Gratificadas</h2>
+                    <div id="gratified-functions-container" class="space-y-4">
+                        <!-- Entradas de função gratificada serão adicionadas aqui -->
+                    </div>
+                    <button type="button" id="add-function-btn" class="mt-4 bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Adicionar Período de Função
+                    </button>
+                </div>
+
+                <!-- Botão de Calcular -->
+                <div class="text-center pt-4">
+                    <button type="submit" class="w-full md:w-1/2 bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105">
+                        Calcular Simulação
+                    </button>
+                </div>
+            </form>
+
+            <!-- Seção de Resultados -->
+            <div id="results-section" class="mt-10 pt-6 border-t border-gray-200 hidden">
+                <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Resultado da Simulação</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-lg mb-2 text-gray-600">Situação Atual</h3>
+                        <p><strong>Remuneração Bruta Mensal Atual:</strong> <span id="current-gross-salary"></span></p>
+                        <p><strong>Faixa da Carreira Atual:</strong> <span id="current-band"></span></p>
+                        <p><strong>ATS Atual:</strong> <span id="current-ats"></span></p>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-lg mb-2 text-red-800">Projeção para Aposentadoria</h3>
+                        <p><strong>Data Prevista:</strong> <span id="retirement-date"></span> (<span id="retirement-age"></span> anos de idade)</p>
+                        <p><strong>Tempo Total de Contribuição:</strong> <span id="total-contribution-time"></span></p>
+                        <p><strong>Percentual do Benefício:</strong> <span id="benefit-percentage"></span></p>
+                        <p class="font-bold text-xl mt-2"><strong>Benefício Mensal Estimado:</strong> <span id="retirement-benefit"></span></p>
+                    </div>
+                </div>
+                 <div class="mt-6 bg-white p-6 rounded-lg shadow-inner">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-gray-600 mb-2 sm:mb-0">Memória de Cálculo</h3>
+                        <div class="flex space-x-2 w-full sm:w-auto mt-2 sm:mt-0">
+                            <button type="button" id="generate-report-btn" class="hidden bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm w-1/2 sm:w-auto">
+                                Gerar Relatório
+                            </button>
+                            <button id="export-btn" class="hidden bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm w-1/2 sm:w-auto">
+                                Exportar para Excel
+                            </button>
+                        </div>
+                    </div>
+                    <pre id="calculation-details" class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto text-sm"></pre>
+                </div>
+            </div>
+            <!-- RODAPÉ DE RASTREABILIDADE -->
+            <div class="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
+                <p>Simulador Versão 1.6 | Atualizado para Tabelas 2026</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estrutura do Relatório (Hidden by default) -->
+    <div id="report-view" class="hidden fixed inset-0 bg-white z-40 overflow-y-auto p-4 md:p-10 print:static print:p-0">
+        <!-- O conteúdo será preenchido por JS -->
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmation-modal" class="fixed inset-0 z-50 items-center justify-center hidden modal-backdrop">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 md:w-1/3">
+            <h3 class="text-lg font-medium text-gray-900">Confirmar Ação</h3>
+            <p class="mt-2 text-sm text-gray-600">Você tem certeza que deseja limpar todos os dados do formulário? Esta ação não pode ser desfeita.</p>
+            <div class="mt-4 flex justify-end space-x-2">
+                <button id="cancel-clear-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancelar</button>
+                <button id="confirm-clear-btn" class="px-4 py-2 bg-red-800 text-white rounded-md hover:bg-red-900">Sim, Limpar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DADOS E CONSTANTES ---
+        const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV', 'XXV', 'XXVI', 'XXVII', 'XXVIII', 'XXIX', 'XXX', 'XXXI', 'XXXII', 'XXXIII', 'XXXIV', 'XXXV', 'XXXVI'];
+        
+        const SALARY_CAP_GENERAL = 37068.57;
+        const SALARY_CAP_PROCURADOR = 46366.19;
+        const DAYS_IN_YEAR = 365; 
+        const DAYS_IN_MONTH = 30; 
+        let detailedDataForExport = [];
+        
+        // ATUALIZAÇÃO REQUERIDA: Valores das faixas conforme fornecido em texto
+        const careerData = {
+            auxiliar_de_seguranca: {'I': 2869.21, 'II': 3014.09, 'III': 3164.75, 'IV': 3323.08, 'V': 3489.13, 'VI': 3663.71, 'VII': 3846.83, 'VIII': 4039.19, 'IX': 4241.14, 'X': 4453.17, 'XI': 4675.84, 'XII': 4909.60, 'XIII': 5155.11, 'XIV': 5412.83, 'XV': 5683.50, 'XVI': 5967.66, 'XVII': 6266.11, 'XVIII': 6579.41, 'XIX': 6908.29, 'XX': 7253.85, 'XXI': 7616.39, 'XXII': 7997.23, 'XXIII': 8397.15, 'XXIV': 8816.98, 'XXV': 9257.74, 'XXVI': 9720.72, 'XXVII': 10206.69, 'XXVIII': 10717.01, 'XXIX': 11252.84, 'XXX': 11815.49, 'XXXI': 12406.35, 'XXXII': 13026.61, 'XXXIII': 13677.95, 'XXXIV': 14361.91, 'XXXV': 15079.95, 'XXXVI': 15833.99},
+            assistente_administrativo: {'I': 2946.70, 'II': 3094.02, 'III': 3248.75, 'IV': 3411.23, 'V': 3581.68, 'VI': 3760.83, 'VII': 3948.81, 'VIII': 4146.36, 'IX': 4354.34, 'X': 4571.36, 'XI': 4799.82, 'XII': 5039.80, 'XIII': 5291.83, 'XIV': 5556.48, 'XV': 5834.23, 'XVI': 6125.88, 'XVII': 6432.39, 'XVIII': 6753.89, 'XIX': 7091.63, 'XX': 7446.14, 'XXI': 7818.49, 'XXII': 8209.41, 'XXIII': 8619.84, 'XXIV': 9050.84, 'XXV': 9503.46, 'XXVI': 9978.65, 'XXVII': 10477.50, 'XXVIII': 11001.43, 'XXIX': 11551.48, 'XXX': 12129.09, 'XXXI': 12735.51, 'XXXII': 13372.33, 'XXXIII': 14040.89, 'XXXIV': 14742.96, 'XXXV': 15480.05, 'XXXVI': 16254.12},
+            tecnico_administrativo: {'I': 3300.82, 'II': 3465.89, 'III': 3639.19, 'IV': 3821.15, 'V': 4012.20, 'VI': 4212.84, 'VII': 4423.42, 'VIII': 4644.62, 'IX': 4876.91, 'X': 5120.70, 'XI': 5376.77, 'XII': 5645.55, 'XIII': 5927.85, 'XIV': 6224.23, 'XV': 6535.42, 'XVI': 6862.21, 'XVII': 7205.31, 'XVIII': 7565.66, 'XIX': 7943.90, 'XX': 8341.07, 'XXI': 8758.16, 'XXII': 9196.00, 'XXIII': 9655.90, 'XXIV': 10138.57, 'XXV': 10646.51, 'XXVI': 11177.93, 'XXVII': 11736.68, 'XXVIII': 12323.57, 'XXIX': 12939.72, 'XXX': 13586.68, 'XXXI': 14266.03, 'XXXII': 14979.29, 'XXXIII': 15728.32, 'XXXIV': 16514.73, 'XXXV': 17340.44, 'XXXVI': 18207.49},
+            taquigrafo_i: {'I': 3465.89, 'II': 3639.19, 'III': 3821.15, 'IV': 4012.20, 'V': 4212.84, 'VI': 4423.42, 'VII': 4644.62, 'VIII': 4876.91, 'IX': 5120.70, 'X': 5376.77, 'XI': 5646.26, 'XII': 5927.85, 'XIII': 6224.23, 'XIV': 6535.42, 'XV': 6862.21, 'XVI': 7205.31, 'XVII': 7565.66, 'XVIII': 7943.90, 'XIX': 8341.07, 'XX': 8758.16, 'XXI': 9196.00, 'XXII': 9655.90, 'XXIII': 10138.57, 'XXIV': 10645.51, 'XXV': 11177.93, 'XXVI': 11736.68, 'XXVII': 12323.57, 'XXVIII': 12939.72, 'XXIX': 13586.68, 'XXX': 14266.03, 'XXXI': 14979.29, 'XXXII': 15728.32, 'XXXIII': 16514.73, 'XXXIV': 17340.44, 'XXXV': 18207.49, 'XXXVI': 19117.90},
+            tecnico_suporte_informatica: {'I': 3465.89, 'II': 3639.19, 'III': 3821.15, 'IV': 4012.20, 'V': 4212.84, 'VI': 4423.42, 'VII': 4644.62, 'VIII': 4876.91, 'IX': 5120.70, 'X': 5376.77, 'XI': 5646.26, 'XII': 5927.85, 'XIII': 6224.23, 'XIV': 6535.42, 'XV': 6862.21, 'XVI': 7205.31, 'XVII': 7565.66, 'XVIII': 7943.90, 'XIX': 8341.07, 'XX': 8758.16, 'XXI': 9196.00, 'XXII': 9655.90, 'XXIII': 10138.57, 'XXIV': 10645.51, 'XXV': 11177.93, 'XXVI': 11736.68, 'XXVII': 12323.57, 'XXVIII': 12939.72, 'XXIX': 13586.68, 'XXX': 14266.03, 'XXXI': 14979.29, 'XXXII': 15728.32, 'XXXIII': 16514.73, 'XXXIV': 17340.44, 'XXXV': 18207.49, 'XXXVI': 19117.90},
+            programador_computador: {'I': 4605.70, 'II': 4836.01, 'III': 5077.77, 'IV': 5331.65, 'V': 5598.17, 'VI': 5878.06, 'VII': 6172.00, 'VIII': 6480.65, 'IX': 6804.57, 'X': 7144.87, 'XI': 7502.09, 'XII': 7877.16, 'XIII': 8271.03, 'XIV': 8684.63, 'XV': 9118.89, 'XVI': 9574.78, 'XVII': 10053.49, 'XVIII': 10556.21, 'XIX': 11084.07, 'XX': 11638.16, 'XXI': 12222.18, 'XXII': 12831.09, 'XXIII': 13472.69, 'XXIV': 14146.33, 'XXV': 14853.60, 'XXVI': 15596.40, 'XXVII': 16376.19, 'XXVIII': 17194.88, 'XXIX': 18054.70, 'XXX': 18957.63, 'XXXI': 19905.50, 'XXXII': 20900.76, 'XXXIII': 21945.77, 'XXXIV': 23043.06, 'XXXV': 24195.24, 'XXXVI': 25405.03},
+            jornalista: {'I': 5015.91, 'II': 5266.72, 'III': 5530.04, 'IV': 5806.54, 'V': 6096.90, 'VI': 6401.75, 'VII': 6721.79, 'VIII': 7057.92, 'IX': 7410.78, 'X': 7781.25, 'XI': 8170.34, 'XII': 8578.83, 'XIII': 9007.79, 'XIV': 9458.24, 'XV': 9931.14, 'XVI': 10427.72, 'XVII': 10949.08, 'XVIII': 11496.49, 'XIX': 12071.27, 'XX': 12674.89, 'XXI': 13308.63, 'XXII': 13974.10, 'XXIII': 14672.79, 'XXIV': 15406.38, 'XXV': 16178.17, 'XXVI': 16985.52, 'XXVII': 17834.88, 'XXVIII': 18726.73, 'XXIX': 19663.02, 'XXX': 20646.20, 'XXXI': 21678.52, 'XXXII': 22762.44, 'XXXIII': 23900.59, 'XXXIV': 25095.58, 'XXXV': 26350.38, 'XXXVI': 27667.87},
+            assistente_social: {'I': 5266.72, 'II': 5530.04, 'III': 5806.54, 'IV': 6096.90, 'V': 6401.75, 'VI': 6721.79, 'VII': 7057.92, 'VIII': 7410.78, 'IX': 7781.25, 'X': 8170.34, 'XI': 8578.83, 'XII': 9008.61, 'XIII': 9458.24, 'XIV': 9931.14, 'XV': 10428.59, 'XVI': 10950.02, 'XVII': 11497.52, 'XVIII': 12072.40, 'XIX': 12676.01, 'XX': 13309.82, 'XXI': 13975.31, 'XXII': 14674.07, 'XXIII': 15407.78, 'XXIV': 16178.17, 'XXV': 16987.07, 'XXVI': 17836.43, 'XXVII': 18728.25, 'XXVIII': 19664.66, 'XXIX': 20646.20, 'XXX': 21678.52, 'XXXI': 22762.44, 'XXXII': 23902.52, 'XXXIII': 25097.64, 'XXXIV': 26352.53, 'XXXV': 27670.16, 'XXXVI': 29051.26},
+            analista_adm_rh: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7509.03, 'VIII': 7884.49, 'IX': 8278.71, 'X': 8692.65, 'XI': 9127.22, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30908.16},
+            analista_comissoes: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7509.03, 'VIII': 7884.49, 'IX': 8278.71, 'X': 8692.65, 'XI': 9127.22, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30908.16},
+            analista_economico: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7510.08, 'VIII': 7885.58, 'IX': 8279.86, 'X': 8693.85, 'XI': 9128.54, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30912.50},
+            analista_legislativo: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7510.08, 'VIII': 7885.58, 'IX': 8279.86, 'X': 8693.85, 'XI': 9128.54, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30912.50},
+            bibliotecario: {'I': 5327.89, 'II': 5594.29, 'III': 5873.99, 'IV': 6167.68, 'V': 6476.01, 'VI': 6799.85, 'VII': 7139.90, 'VIII': 7496.90, 'IX': 7871.74, 'X': 8265.33, 'XI': 8678.54, 'XII': 9112.50, 'XIII': 9568.11, 'XIV': 10046.56, 'XV': 10548.81, 'XVI': 11076.32, 'XVII': 11630.09, 'XVIII': 12211.62, 'XIX': 12822.16, 'XX': 13463.27, 'XXI': 14136.49, 'XXII': 14843.31, 'XXIII': 15585.47, 'XXIV': 16364.71, 'XXV': 17182.97, 'XXVI': 18042.12, 'XXVII': 18944.26, 'XXVIII': 19891.45, 'XXIX': 20886.07, 'XXX': 21930.36, 'XXXI': 23026.90, 'XXXII': 24178.24, 'XXXIII': 25387.25, 'XXXIV': 26656.47, 'XXXV': 27989.38, 'XXXVI': 29388.76},
+            contador: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7509.03, 'VIII': 7884.49, 'IX': 8278.71, 'X': 8693.85, 'XI': 9128.54, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30908.16},
+            enfermeiro: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7509.03, 'VIII': 7884.49, 'IX': 8278.71, 'X': 8692.65, 'XI': 9128.54, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30908.16},
+            redator: {'I': 5603.34, 'II': 5883.51, 'III': 6177.68, 'IV': 6486.55, 'V': 6810.82, 'VI': 7151.40, 'VII': 7510.08, 'VIII': 7885.58, 'IX': 8279.86, 'X': 8693.85, 'XI': 9128.54, 'XII': 9584.97, 'XIII': 10064.22, 'XIV': 10567.43, 'XV': 11095.80, 'XVI': 11650.59, 'XVII': 12233.12, 'XVIII': 12844.78, 'XIX': 13487.02, 'XX': 14161.37, 'XXI': 14869.44, 'XXII': 15612.91, 'XXIII': 16393.55, 'XXIV': 17213.23, 'XXV': 18073.90, 'XXVI': 18977.59, 'XXVII': 19926.47, 'XXVIII': 20922.79, 'XXIX': 21968.93, 'XXX': 23067.38, 'XXXI': 24220.75, 'XXXII': 25431.78, 'XXXIII': 26703.37, 'XXXIV': 28038.54, 'XXXV': 29440.47, 'XXXVI': 30908.16},
+            taquigrafo_ii: {'I': 5327.89, 'II': 5594.29, 'III': 5873.99, 'IV': 6167.68, 'V': 6476.01, 'VI': 6799.85, 'VII': 7139.90, 'VIII': 7496.90, 'IX': 7871.74, 'X': 8265.33, 'XI': 8678.54, 'XII': 9112.50, 'XIII': 9568.11, 'XIV': 10046.56, 'XV': 10548.81, 'XVI': 11076.32, 'XVII': 11630.09, 'XVIII': 12211.62, 'XIX': 12822.16, 'XX': 13463.27, 'XXI': 14136.49, 'XXII': 14843.31, 'XXIII': 15585.47, 'XXIV': 16364.71, 'XXV': 17182.97, 'XXVI': 18042.12, 'XXVII': 18944.26, 'XXVIII': 19891.45, 'XXIX': 20886.07, 'XXX': 21930.36, 'XXXI': 23026.90, 'XXXII': 24178.24, 'XXXIII': 25387.25, 'XXXIV': 26656.47, 'XXXV': 27989.38, 'XXXVI': 29388.76},
+            analista_sistemas: {'I': 6656.95, 'II': 6989.79, 'III': 7339.26, 'IV': 7706.22, 'V': 8091.42, 'VI': 8496.11, 'VII': 8920.90, 'VIII': 9367.03, 'IX': 9835.21, 'X': 10327.03, 'XI': 10843.31, 'XII': 11385.60, 'XIII': 11954.81, 'XIV': 12552.60, 'XV': 13180.28, 'XVI': 13839.19, 'XVII': 14531.29, 'XVIII': 15257.67, 'XIX': 16020.61, 'XX': 16821.66, 'XXI': 17662.73, 'XXII': 18545.85, 'XXIII': 19473.14, 'XXIV': 20446.80, 'XXV': 21469.18, 'XXVI': 22542.62, 'XXVII': 23669.70, 'XXVIII': 24853.28, 'XXIX': 26095.83, 'XXX': 27400.75, 'XXXI': 28770.81, 'XXXII': 30209.38, 'XXXIII': 31719.80, 'XXXIV': 33305.82, 'XXXV': 34971.10, 'XXXVI': 36719.70},
+            procurador_juridico: {'I': 6656.95, 'II': 6989.79, 'III': 7339.26, 'IV': 7706.22, 'V': 8091.42, 'VI': 8496.11, 'VII': 8920.90, 'VIII': 9367.03, 'IX': 9835.21, 'X': 10327.03, 'XI': 10843.31, 'XII': 11385.60, 'XIII': 11954.81, 'XIV': 12552.60, 'XV': 13180.28, 'XVI': 13839.19, 'XVII': 14531.29, 'XVIII': 15257.67, 'XIX': 16020.61, 'XX': 16821.66, 'XXI': 17662.73, 'XXII': 18545.85, 'XXIII': 19473.14, 'XX XXIV': 20446.80, 'XXV': 21469.18, 'XXVI': 22542.62, 'XXVII': 23669.70, 'XXVIII': 24853.28, 'XXIX': 26095.83, 'XXX': 27400.75, 'XXXI': 28770.81, 'XXXII': 30209.38, 'XXXIII': 31719.80, 'XXXIV': 33305.82, 'XXXV': 34971.10, 'XXXVI': 36719.70},
+        };
+
+        const careerDisplayNames = {
+            analista_adm_rh: "Analista de Administração e RH",
+            analista_comissoes: "Analista às Comissões",
+            analista_economico: "Analista Econômico Financeiro",
+            analista_legislativo: "Analista Legislativo",
+            analista_sistemas: "Analista de Sistemas",
+            assistente_administrativo: "Assistente Administrativo",
+            assistente_social: "Assistente Social",
+            auxiliar_de_seguranca: "Auxiliar de Segurança",
+            bibliotecario: "Bibliotecário",
+            contador: "Contador",
+            enfermeiro: "Enfermeiro",
+            jornalista: "Jornalista",
+            procurador_juridico: "Procurador Jurídico",
+            programador_computador: "Programador de Computador",
+            redator: "Redator",
+            taquigrafo_i: "Taquígrafo I",
+            taquigrafo_ii: "Taquígrafo II",
+            tecnico_administrativo: "Técnico Administrativo",
+            tecnico_suporte_informatica: "Técnico de Suporte em Informática"
+        };
+        const fgValues = { 'FG4': 1518.01, 'FG5': 3035.98, 'FG6': 7727.99, 'FG7': 13247.97, 'FG8': 16007.98 };
+        const stimulusValues = { 'graduacao': 0.30, 'pos_graduacao': 0.10, 'mestrado': 0.15, 'doutorado': 0.20 };
+        const ATS_PERCENTAGES = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]; 
+
+        // --- LÓGICA DO FORMULÁRIO DINÂMICO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const careerSelect = document.getElementById('career');
+            const sortedCareers = Object.entries(careerDisplayNames).sort(([,a],[,b]) => a.localeCompare(b));
+            for (const [key, value] of sortedCareers) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = value;
+                careerSelect.appendChild(option);
+            }
+            
+            const careerBandSelect = document.getElementById('current-career-band-index');
+            for (let i = 1; i <= romanNumerals.length; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = romanNumerals[i - 1]; 
+                careerBandSelect.appendChild(option);
+            }
+            
+            setupIncorporationListeners();
+        });
+
+        function setupIncorporationListeners(formData = {}) {
+            ['contribution_only', 'all_effects'].forEach(type => {
+                const container = document.getElementById(`inc-${type}`);
+                if (!container) return;
+
+                const yearsInput = container.querySelector('.inc-years');
+                const monthsInput = container.querySelector('.inc-months');
+                const daysInput = container.querySelector('.inc-days');
+                const valueInput = container.querySelector('.inc-value');
+
+                if (formData[type]) {
+                    yearsInput.value = formData[type].years || '';
+                    monthsInput.value = formData[type].months || '';
+                    daysInput.value = formData[type].days || '';
+                    valueInput.value = formData[type].value || '';
+                }
+
+                const handleTimeInput = (event) => {
+                    const currentYears = parseInt(yearsInput.value) || 0;
+                    const currentMonths = parseInt(monthsInput.value) || 0;
+                    const currentDays = parseInt(daysInput.value) || 0;
+
+                    const isYearsMonthsFilled = currentYears > 0 || currentMonths > 0;
+                    const isDaysFilled = currentDays > 0;
+
+                    if (event.target === daysInput) {
+                        if (isDaysFilled) {
+                            yearsInput.value = ''; yearsInput.disabled = true;
+                            monthsInput.value = ''; monthsInput.disabled = true;
+                        } else if (!isYearsMonthsFilled) {
+                            yearsInput.disabled = false;
+                            monthsInput.disabled = false;
+                        }
+                    } else if (event.target === yearsInput || event.target === monthsInput) {
+                        if (isYearsMonthsFilled) {
+                            daysInput.value = ''; daysInput.disabled = true;
+                        } else if (!isDaysFilled) {
+                            daysInput.disabled = false;
+                        }
+                    }
+                    
+                    if (!isYearsMonthsFilled && !isDaysFilled) {
+                        yearsInput.disabled = false;
+                        monthsInput.disabled = false;
+                        daysInput.disabled = false;
+                    }
+                    
+                    saveFormData();
+                };
+
+                [yearsInput, monthsInput, daysInput].forEach(input => input.addEventListener('input', handleTimeInput));
+
+                valueInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = (parseInt(value) / 100).toFixed(2) + '';
+                    value = value.replace('.', ',');
+                    value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    e.target.value = value;
+                    saveFormData();
+                });
+                
+                if (yearsInput.value || monthsInput.value) {
+                    daysInput.disabled = true;
+                } else if (daysInput.value) {
+                    yearsInput.disabled = true;
+                    monthsInput.disabled = true;
+                }
+            });
+        }
+
+
+        const addFunctionBtn = document.getElementById('add-function-btn');
+        const functionsContainer = document.getElementById('gratified-functions-container');
+        addFunctionBtn.addEventListener('click', () => {
+            const id = Date.now();
+            const newDiv = document.createElement('div');
+            newDiv.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg border';
+            newDiv.id = `function-${id}`;
+            newDiv.innerHTML = `
+                <input type="date" placeholder="Data Início" class="function-start-date w-full p-2 border rounded-md form-input" required>
+                <input type="date" placeholder="Data Fim" class="function-end-date w-full p-2 border rounded-md form-input" required>
+                <div class="flex items-center">
+                    <select class="function-level w-full p-2 border rounded-md form-input">${Object.keys(fgValues).map(fg => `<option value="${fg}">${fg}</option>`).join('')}</select>
+                    <button type="button" onclick="document.getElementById('function-${id}').remove(); saveFormData();" class="ml-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                </div>`;
+            functionsContainer.appendChild(newDiv);
+            saveFormData();
+        });
+        
+        const addStimulusBtn = document.getElementById('add-stimulus-btn');
+        const stimulusContainer = document.getElementById('academic-stimulus-container');
+        addStimulusBtn.addEventListener('click', () => {
+            const id = Date.now();
+            const newDiv = document.createElement('div');
+            newDiv.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-gray-50 rounded-lg border';
+            newDiv.id = `stimulus-${id}`;
+            newDiv.innerHTML = `
+                <div>
+                    <label class="text-xs font-medium text-gray-600">Tipo</label>
+                    <select class="stimulus-type w-full p-2 border rounded-md form-input">
+                        <option value="graduacao">Graduação (30%)</option>
+                        <option value="pos_graduacao">Pós-Graduação (10%)</option>
+                        <option value="mestrado">Mestrado (15%)</option>
+                        <option value="doutorado">Doutorado (20%)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <div class="flex-grow">
+                        <label class="text-xs font-medium text-gray-600">Data de Concessão</label>
+                        <input type="date" class="stimulus-date w-full p-2 border rounded-md form-input" required>
+                    </div>
+                    <button type="button" onclick="document.getElementById('stimulus-${id}').remove(); saveFormData();" class="ml-2 mb-1 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                </div>`;
+            stimulusContainer.appendChild(newDiv);
+            saveFormData();
+        });
+
+        function addYears(date, years) {
+            const newDate = new Date(date);
+            newDate.setFullYear(date.getFullYear() + years);
+            return newDate;
+        }
+
+        function getYearsOfService(currentDate, admissionDate) {
+            let years = currentDate.getFullYear() - admissionDate.getFullYear();
+            let months = currentDate.getMonth() - admissionDate.getMonth();
+            let days = currentDate.getDate() - admissionDate.getDate();
+            if (days < 0) { months--; }
+            if (months < 0) { years--; }
+            return years;
+        }
+        
+        function getCareerBandIndex(currentDate, admissionDate) { 
+            const admissionYear = admissionDate.getFullYear();
+            const cutoffDate = new Date(admissionYear + 1, 8, 30); 
+            
+            let progressionStartYear;
+            let initialBand = 0; 
+
+            if (admissionDate <= cutoffDate) {
+                progressionStartYear = admissionYear + 2; 
+                initialBand = 1; 
+            } else {
+                progressionStartYear = admissionYear + 2; 
+                initialBand = 0;
+            }
+
+            let progressionYears = currentDate.getFullYear() - progressionStartYear;
+            if (currentDate.getMonth() < 9) { progressionYears--; } 
+            
+            let bandIndex = progressionYears + initialBand;
+            return Math.max(0, Math.min(bandIndex, romanNumerals.length - 1));
+        }
+
+        function parseHistoricalData(dataString) {
+            const lines = dataString.trim().split('\n').filter(line => line.trim() !== '');
+            return lines.map(line => {
+                const parts = line.trim().split(/\s+/); 
+                if (parts.length < 2) { return null; }
+
+                const dateStr = parts[0];
+                let valueStr = parts[1];
+                
+                const [month, year] = dateStr.split('/');
+                if (!month || !year) { return null; }
+                
+                const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+                let value = valueStr.replace(/\./g, '').replace(',', '.');
+                value = parseFloat(value) || 0;
+
+                return { date, value };
+            }).filter(data => data !== null).sort((a, b) => a.date - b.date); 
+        }
+
+        const form = document.getElementById('retirement-form');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        generateReportBtn.addEventListener('click', generateReport);
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const errorMessagesDiv = document.getElementById('error-messages');
+            const errorList = errorMessagesDiv.querySelector('ul');
+            errorList.innerHTML = '';
+            let errors = [];
+
+            const admissionDate = new Date(document.getElementById('admission-date').value + 'T00:00:00');
+            const birthDate = new Date(document.getElementById('birth-date').value + 'T00:00:00');
+            const gender = document.getElementById('gender').value;
+            const careerKey = document.getElementById('career').value;
+            const careerLevel = document.getElementById('career-level').value;
+
+            const manualBandNumber = parseInt(document.getElementById('current-career-band-index').value) || null; 
+            const historicalDataText = document.getElementById('historical-data').value;
+            const lastAtsConcessionDateInput = document.getElementById('last-ats-concession').value;
+            const lastAtsNumber = parseInt(document.getElementById('last-ats-number').value) || 0;
+
+            let totalIncMonths = 0;
+            let totalIncValue = 0;
+            let effectiveAdmissionMonthsAdjustment = 0; 
+
+            const incorporationEntries = [];
+            ['contribution_only', 'all_effects'].forEach(type => {
+                const container = document.getElementById(`inc-${type}`);
+                if (!container) return;
+
+                const years = parseInt(container.querySelector('.inc-years').value) || 0;
+                const months = parseInt(container.querySelector('.inc-months').value) || 0;
+                const days = parseInt(container.querySelector('.inc-days').value) || 0;
+                
+                const valueStr = container.querySelector('.inc-value').value;
+                const value = parseFloat(valueStr.replace(/\./g, '').replace(',', '.')) || 0;
+
+                let currentIncMonths = 0;
+                
+                if (days > 0) {
+                    currentIncMonths = Math.round(days / DAYS_IN_MONTH);
+                } else {
+                    currentIncMonths = (years * 12) + months;
+                }
+                
+                if (currentIncMonths > 0 || value > 0) {
+                    totalIncMonths += currentIncMonths;
+                    totalIncValue += value;
+
+                    if (type === 'all_effects') {
+                        effectiveAdmissionMonthsAdjustment += currentIncMonths;
+                    }
+
+                     incorporationEntries.push({ years, months, days, value, type, calculatedMonths: currentIncMonths });
+                }
+            });
+            
+            let lastAtsDate = null;
+            if (lastAtsConcessionDateInput) {
+                lastAtsDate = new Date(lastAtsConcessionDateInput + 'T00:00:00');
+                if (lastAtsNumber < 0 || lastAtsNumber > 10) { errors.push(`O número do último ATS concedido deve ser entre 0 e 10.`); }
+                if (lastAtsDate > new Date()) { errors.push(`A data da última concessão de ATS não pode ser futura.`); }
+            } else if (lastAtsNumber > 0) {
+                 errors.push(`Se o número do ATS for maior que 0, a data da última concessão deve ser informada.`);
+            }
+            
+            const gratifiedFunctions = Array.from(document.querySelectorAll('#gratified-functions-container .grid')).map((el, index) => {
+                const start = new Date(el.querySelector('.function-start-date').value + 'T00:00:00');
+                const end = new Date(el.querySelector('.function-end-date').value + 'T00:00:00');
+                if (start > end) { errors.push(`Função Gratificada ${index + 1}: A data de fim não pode ser anterior à data de início.`); }
+                return { start, end, level: el.querySelector('.function-level').value };
+            });
+
+            const academicStimuli = Array.from(document.querySelectorAll('#academic-stimulus-container .grid')).map((el, index) => {
+                const date = new Date(el.querySelector('.stimulus-date').value + 'T00:00:00');
+                return { type: el.querySelector('.stimulus-type').value, date };
+            });
+
+            if (errors.length > 0) {
+                errors.forEach(err => {
+                    const li = document.createElement('li');
+                    li.textContent = err;
+                    errorList.appendChild(li);
+                });
+                errorMessagesDiv.classList.remove('hidden');
+                document.getElementById('results-section').classList.add('hidden');
+                return;
+            }
+            errorMessagesDiv.classList.add('hidden');
+
+            let log = "";
+            let monthlyProjectionLog = "";
+            detailedDataForExport = []; 
+            const today = new Date();
+
+            const historicalContributions = parseHistoricalData(historicalDataText);
+            let allContributions = [];
+            let projectionStartDate = new Date(admissionDate); 
+
+            if (historicalContributions.length > 0) {
+                const lastHistorical = historicalContributions[historicalContributions.length - 1];
+                projectionStartDate = new Date(lastHistorical.date.getFullYear(), lastHistorical.date.getMonth() + 1, 1);
+                allContributions.push(...historicalContributions.map(h => h.value));
+                historicalContributions.forEach(h => {
+                     detailedDataForExport.push({
+                        "Mês/Ano": `${(h.date.getMonth() + 1).toString().padStart(2, '0')}/${h.date.getFullYear()}`,
+                        "Faixa": "HISTÓRICO",
+                        "Salário Base": h.value,
+                        "Resp. Técnica": 0,
+                        "Grat. Adicional / FG": 0,
+                        "ATS": 0,
+                        "Est. Graduação": 0,
+                        "Est. Pós/Mest./Dout.": 0,
+                        "Redutor": 0,
+                        "Salário de Contribuição": h.value
+                    });
+                });
+            } else {
+                 projectionStartDate = new Date(admissionDate);
+            }
+            
+            let effectiveAdmissionDate = new Date(admissionDate);
+            effectiveAdmissionDate.setMonth(effectiveAdmissionDate.getMonth() - effectiveAdmissionMonthsAdjustment);
+            
+            const retirementAgeYears = gender === 'masculino' ? 65 : 62;
+            const retirementDate = new Date(birthDate);
+            retirementDate.setFullYear(birthDate.getFullYear() + retirementAgeYears);
+            
+            let currentAtsNumber = lastAtsNumber;
+            let atsNumberAtToday = currentAtsNumber; 
+            let currentAtsDate = lastAtsDate || effectiveAdmissionDate; 
+            let nextAtsConcessionDate = addYears(currentAtsDate, 5); 
+            
+            let progressionIndex = manualBandNumber ? manualBandNumber - 1 : null; 
+            let currentDate = new Date(projectionStartDate.getFullYear(), projectionStartDate.getMonth(), 1);
+            const selectedCareerTable = careerData[careerKey];
+            
+            let isFirstMonthProjection = true;
+            let passedToday = false;
+            const progressionMonth = 9; 
+            
+            while (currentDate <= retirementDate) {
+                if (isFirstMonthProjection) { monthlyProjectionLog += "\n--- Projeção Futura Detalhada ---\n"; isFirstMonthProjection = false; }
+                if (!passedToday && currentDate > today) { passedToday = true; } 
+
+                let bandIndex;
+                if (progressionIndex === null) {
+                    bandIndex = getCareerBandIndex(currentDate, admissionDate); 
+                } else {
+                    bandIndex = progressionIndex;
+                    if (currentDate.getMonth() === progressionMonth && bandIndex < romanNumerals.length - 1) {
+                        bandIndex++;
+                        progressionIndex = bandIndex; 
+                    }
+                }
+                const baseSalary = selectedCareerTable[romanNumerals[bandIndex]];
+
+                if (currentDate.getFullYear() === nextAtsConcessionDate.getFullYear() && 
+                    currentDate.getMonth() === nextAtsConcessionDate.getMonth() && 
+                    currentAtsNumber < 10) 
+                {
+                    currentAtsNumber++;
+                    currentAtsDate = currentDate;
+                    nextAtsConcessionDate = addYears(currentAtsDate, 5);
+                    if (currentDate <= today) { atsNumberAtToday = currentAtsNumber; }
+                }
+                const atsPercentage = ATS_PERCENTAGES[currentAtsNumber];
+                const atsValue = baseSalary * atsPercentage;
+
+                const techRespPerc = 0.30;
+                const techRespValue = baseSalary * techRespPerc;
+
+                let additionalGratificationPerc = 0;
+                if (careerKey === 'procurador_juridico') additionalGratificationPerc = 0.60;
+                if (careerKey === 'contador') additionalGratificationPerc = 0.75;
+                const additionalGratificationValue = baseSalary * additionalGratificationPerc;
+
+                let graducaoPerc = 0;
+                let maxOutrosPerc = 0;
+                academicStimuli.forEach(stimulus => {
+                    if (currentDate >= stimulus.date) {
+                        const yearsForStimulus = getYearsOfService(currentDate, effectiveAdmissionDate); 
+                        let isEligible = false;
+                        if (stimulus.type === 'graduacao' && careerLevel === 'medio' && yearsForStimulus >= 5) { isEligible = true; } 
+                        else if (stimulus.type !== 'graduacao') {
+                            if (careerLevel === 'superior' && yearsForStimulus >= 3) { isEligible = true; } 
+                            else if (careerLevel === 'medio') {
+                                const gradStimulus = academicStimuli.find(s => s.type === 'graduacao');
+                                if (gradStimulus && currentDate >= gradStimulus.date) {
+                                    const yearsSinceGrad = getYearsOfService(currentDate, gradStimulus.date);
+                                    if (yearsSinceGrad >= 3) isEligible = true;
+                                }
+                            }
+                        }
+                        if (isEligible) {
+                            if (stimulus.type === 'graduacao') { graducaoPerc = stimulusValues.graduacao; } 
+                            else { if (stimulusValues[stimulus.type] > maxOutrosPerc) { maxOutrosPerc = stimulusValues[stimulus.type]; } }
+                        }
+                    }
+                });
+                const totalAcademicStimulusPerc = graducaoPerc + maxOutrosPerc;
+                const academicStimulusValue = baseSalary * totalAcademicStimulusPerc;
+
+                let gratifiedFunctionValue = 0;
+                gratifiedFunctions.forEach(func => {
+                    if(currentDate >= func.start && currentDate <= func.end) {
+                        if (currentDate >= projectionStartDate) {
+                            gratifiedFunctionValue = fgValues[func.level];
+                        }
+                    }
+                });
+                
+                let chosenGratificationValue = Math.max(additionalGratificationValue, gratifiedFunctionValue);
+                const proventosBrutos = baseSalary + techRespValue + atsValue + academicStimulusValue + chosenGratificationValue;
+                
+                let redutorValue = 0;
+                let currentSalaryCap = careerKey === 'procurador_juridico' ? SALARY_CAP_PROCURADOR : SALARY_CAP_GENERAL;
+                let contributionSalary = proventosBrutos;
+                if (proventosBrutos > currentSalaryCap) {
+                    redutorValue = proventosBrutos - currentSalaryCap;
+                    contributionSalary = currentSalaryCap;
+                }
+
+                allContributions.push(contributionSalary);
+
+                const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                const year = currentDate.getFullYear();
+
+                // RESTAURANDO O LOG DETALHADO MÊS A MÊS
+                monthlyProjectionLog += `\n--- ${month}/${year} (Faixa ${romanNumerals[bandIndex]}) --- ${currentDate > today ? "(FUTURO)" : "(ATUAL)"}\n`;
+                monthlyProjectionLog += `Salário Base:`.padEnd(32) + `R$ ${baseSalary.toFixed(2).padStart(10)}\n`;
+                monthlyProjectionLog += `+ Resp. Técnica (30%):`.padEnd(32) + `R$ ${techRespValue.toFixed(2).padStart(10)}\n`;
+                if (chosenGratificationValue > 0) {
+                    monthlyProjectionLog += `+ Grat. Adic. / FG:`.padEnd(32) + `R$ ${chosenGratificationValue.toFixed(2).padStart(10)}\n`;
+                }
+                monthlyProjectionLog += `+ Adic. T. Serviço (${(atsPercentage * 100).toFixed(0)}%):`.padEnd(32) + `R$ ${atsValue.toFixed(2).padStart(10)}\n`;
+                if (academicStimulusValue > 0) {
+                    monthlyProjectionLog += `+ Estímulo Acadêmico:`.padEnd(32) + `R$ ${academicStimulusValue.toFixed(2).padStart(10)}\n`;
+                }
+                if (redutorValue > 0) {
+                    monthlyProjectionLog += `- Redutor Teto:`.padEnd(32) + `R$ ${(-redutorValue).toFixed(2).padStart(10)}\n`;
+                }
+                monthlyProjectionLog += `= Salário de Contribuição:`.padEnd(32) + `R$ ${contributionSalary.toFixed(2).padStart(10)}\n`;
+                
+                detailedDataForExport.push({
+                    "Mês/Ano": `${month}/${year}`,
+                    "Faixa": romanNumerals[bandIndex],
+                    "Salário Base": baseSalary,
+                    "Resp. Técnica": techRespValue,
+                    "Grat. Adicional / FG": chosenGratificationValue,
+                    "ATS": atsValue,
+                    "Est. Graduação": baseSalary * graducaoPerc,
+                    "Est. Pós/Mest./Dout.": baseSalary * maxOutrosPerc,
+                    "Redutor": -redutorValue,
+                    "Salário de Contribuição": contributionSalary
+                });
+
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+            
+            const totalContributionSum = allContributions.reduce((a, b) => a + b, 0) + totalIncValue;
+            const totalProjectionMonths = allContributions.length;
+            const totalContributionMonths = totalProjectionMonths + totalIncMonths;
+            const averageSalary = totalContributionSum / totalContributionMonths;
+            
+            const serviceDaysInOffice = (retirementDate - effectiveAdmissionDate) / (1000 * 60 * 60 * 24); 
+            const approxServiceDays = (serviceDaysInOffice / 365.25) * DAYS_IN_YEAR; 
+            const totalIncDays = totalIncMonths * DAYS_IN_MONTH;
+            const totalContributionDays = approxServiceDays + totalIncDays;
+            const contributionYearsForBenefit = totalContributionDays / DAYS_IN_YEAR;
+
+            let benefitPercentage = 0.60;
+            if (contributionYearsForBenefit > 20) {
+                benefitPercentage += (Math.floor(contributionYearsForBenefit) - 20) * 0.02;
+            }
+            benefitPercentage = Math.min(benefitPercentage, 1.0);
+            const finalBenefit = (averageSalary * benefitPercentage);
+            
+            const formattedCareer = careerDisplayNames[careerKey];
+            log += `--- RESUMO DO CÁLCULO DA MÉDIA SALARIAL ---\n`;
+            log += `Carreira: ${formattedCareer}\n`;
+            log += `Média Salarial: R$ ${averageSalary.toFixed(2)}\n`;
+            log += `Benefício Final: R$ ${finalBenefit.toFixed(2)}\n\n`;
+            
+            log += monthlyProjectionLog;
+
+            let currentBandIndex;
+            let currentBandNumber = manualBandNumber; 
+
+            if (currentBandNumber > 0) {
+                currentBandIndex = currentBandNumber - 1; 
+            } else {
+                currentBandIndex = getCareerBandIndex(today, admissionDate); 
+            }
+            const currentBaseSalary = selectedCareerTable[romanNumerals[currentBandIndex]];
+            let currentAtsPerc = ATS_PERCENTAGES[atsNumberAtToday];
+            const currentAtsValue = currentBaseSalary * currentAtsPerc;
+            const currentTechRespValue = currentBaseSalary * 0.30;
+
+            let currentAdditionalGratificationValue = 0;
+            if (careerKey === 'procurador_juridico') currentAdditionalGratificationValue = currentBaseSalary * 0.60;
+            if (careerKey === 'contador') currentAdditionalGratificationValue = currentBaseSalary * 0.75;
+
+            let currentGraducaoPerc = 0;
+            let currentMaxOutrosPerc = 0;
+             academicStimuli.forEach(stimulus => {
+                if (today >= stimulus.date) {
+                    const yearsForStimulus = getYearsOfService(today, effectiveAdmissionDate); 
+                    let isEligible = false;
+                    if(careerLevel === 'medio' && stimulus.type === 'graduacao' && yearsForStimulus >=5) isEligible = true;
+                    if(careerLevel === 'superior' && stimulus.type !== 'graduacao' && yearsForStimulus >= 3) isEligible = true;
+                    if(isEligible) {
+                        if (stimulus.type === 'graduacao') { currentGraducaoPerc = stimulusValues.graduacao; } 
+                        else { if (stimulusValues[stimulus.type] > currentMaxOutrosPerc) { currentMaxOutrosPerc = stimulusValues[stimulus.type]; } }
+                    }
+                }
+            });
+            const currentAcademicStimulusValue = currentBaseSalary * (currentGraducaoPerc + currentMaxOutrosPerc);
+
+            let currentGratifiedFunctionValue = 0;
+            gratifiedFunctions.forEach(func => {
+                if(today >= func.start && today <= func.end) {
+                    currentGratifiedFunctionValue = fgValues[func.level];
+                }
+            });
+
+            const currentChosenGratification = Math.max(currentAdditionalGratificationValue, currentGratifiedFunctionValue);
+            const currentProventosBrutos = currentBaseSalary + currentTechRespValue + currentAtsValue + currentAcademicStimulusValue + currentChosenGratification;
+            const currentSalaryCap = careerKey === 'procurador_juridico' ? SALARY_CAP_PROCURADOR : SALARY_CAP_GENERAL;
+            const currentGrossSalary = Math.min(currentProventosBrutos, currentSalaryCap);
+
+            document.getElementById('results-section').classList.remove('hidden');
+            document.getElementById('export-btn').classList.remove('hidden');
+            generateReportBtn.classList.remove('hidden'); 
+            
+            document.getElementById('current-gross-salary').textContent = `R$ ${currentGrossSalary.toFixed(2)}`;
+            document.getElementById('current-band').textContent = `${romanNumerals[currentBandIndex]}`;
+            document.getElementById('current-ats').textContent = `${(currentAtsPerc * 100).toFixed(0)}%`;
+            
+            document.getElementById('retirement-date').textContent = retirementDate.toLocaleDateString('pt-BR');
+            document.getElementById('retirement-age').textContent = `${retirementAgeYears}`;
+            document.getElementById('total-contribution-time').textContent = `${contributionYearsForBenefit.toFixed(2)} anos`;
+            document.getElementById('benefit-percentage').textContent = `${(benefitPercentage * 100).toFixed(2)}%`;
+            document.getElementById('retirement-benefit').textContent = `R$ ${finalBenefit.toFixed(2)}`;
+
+            document.getElementById('calculation-details').textContent = log;
+            
+            saveFormData();
+        });
+
+        const reportView = document.getElementById('report-view');
+        const mainContainer = document.querySelector('.container');
+
+        function closeReportView() {
+            reportView.classList.add('hidden');
+            mainContainer.classList.remove('hidden'); 
+        }
+
+        function generateReport() {
+            const name = document.getElementById('server-name').value || 'Não Informado';
+            const matricula = document.getElementById('server-id').value || 'N/A';
+            const careerKey = document.getElementById('career').value;
+            const formattedCareer = careerDisplayNames[careerKey];
+
+            const currentGrossSalary = document.getElementById('current-gross-salary').textContent;
+            const currentBand = document.getElementById('current-band').textContent;
+            const currentAts = document.getElementById('current-ats').textContent;
+
+            const retirementDate = document.getElementById('retirement-date').textContent;
+            const retirementAge = document.getElementById('retirement-age').textContent;
+            const totalContributionTime = document.getElementById('total-contribution-time').textContent;
+            const benefitPercentage = document.getElementById('benefit-percentage').textContent;
+            const retirementBenefit = document.getElementById('retirement-benefit').textContent;
+
+            reportView.innerHTML = `
+                <div class="max-w-3xl mx-auto p-6 bg-white shadow-xl rounded-xl border-t-8 border-red-800 print:shadow-none print:p-0 print:border-t-0">
+                    <div class="flex justify-between items-center mb-6 no-print">
+                        <button onclick="closeReportView()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">&leftarrow; Voltar</button>
+                        <button onclick="window.print()" class="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors">Imprimir / Salvar PDF</button>
+                    </div>
+
+                    <div class="text-left mb-8 border-b pb-4">
+                        <h1 class="text-3xl font-bold text-red-800">Relatório de Simulação de Proventos</h1>
+                        <p class="text-gray-600">RPPS - Câmara Municipal de Curitiba</p>
+                        <p class="text-sm text-gray-500 mt-2">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    </div>
+
+                    <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-3">Dados Pessoais e Funcionais</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <p><strong>Servidor:</strong> ${name}</p>
+                            <p><strong>Matrícula:</strong> ${matricula}</p>
+                            <p><strong>Carreira:</strong> ${formattedCareer}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 p-4 border rounded-lg bg-red-50 border-red-200">
+                        <h2 class="text-xl font-semibold text-red-800 mb-3">Situação Atual</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 font-medium">
+                            <p><strong>Faixa Atual:</strong> ${currentBand}</p>
+                            <p><strong>Remuneração Bruta Estimada:</strong> <span class="text-red-700 text-xl">${currentGrossSalary}</span></p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 p-4 border rounded-lg bg-green-50 border-green-200">
+                        <h2 class="text-xl font-semibold text-green-800 mb-3">Projeção para Aposentadoria</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 font-medium">
+                            <p><strong>Data Prevista:</strong> ${retirementDate}</p>
+                            <p><strong>Tempo Total de Contribuição:</strong> ${totalContributionTime}</p>
+                            <p><strong>Percentual do Benefício:</strong> ${benefitPercentage}</p>
+                        </div>
+                        <div class="mt-4 pt-2 border-t border-green-300">
+                            <p class="text-2xl font-bold text-green-700">Benefício Mensal Estimado: ${retirementBenefit}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            mainContainer.classList.add('hidden');
+            reportView.classList.remove('hidden');
+            window.print();
+        }
+
+        const exportBtn = document.getElementById('export-btn');
+        exportBtn.addEventListener('click', () => {
+            if (detailedDataForExport.length === 0) return;
+            const headers = Object.keys(detailedDataForExport[0]);
+            const csvRows = [headers.join(';')]; 
+            detailedDataForExport.forEach(row => {
+                const values = headers.map(header => {
+                    let value = row[header];
+                    if (typeof value === 'number') value = value.toFixed(2).replace('.', ',');
+                    return `"${(''+value).replace(/"/g, '""')}"`;
+                });
+                csvRows.push(values.join(';'));
+            });
+            const blob = new Blob([`\uFEFF${csvRows.join('\n')}`], { type: 'text/csv;charset=utf-8;' }); 
+            const link = document.createElement('a');
+            link.setAttribute('href', URL.createObjectURL(blob));
+            link.setAttribute('download', 'memoria_de_calculo.csv');
+            link.click();
+        });
+
+        const formInputs = document.querySelectorAll('.form-input, #historical-data, #last-ats-concession, #last-ats-number, #current-career-band-index, #server-name, #server-id');
+        
+        function saveFormData() {
+            const formData = {};
+            formInputs.forEach(input => { if(input.id) formData[input.id] = input.value; });
+            localStorage.setItem('retirementFormData', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('retirementFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                formInputs.forEach(input => { if(formData[input.id] !== undefined) input.value = formData[input.id]; });
+            }
+        }
+
+        formInputs.forEach(input => input.addEventListener('change', saveFormData));
+        document.addEventListener('DOMContentLoaded', loadFormData);
+
+        const clearDataBtn = document.getElementById('clear-data-btn');
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const cancelClearBtn = document.getElementById('cancel-clear-btn');
+        const confirmClearBtn = document.getElementById('confirm-clear-btn');
+
+        clearDataBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
+        cancelClearBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+        confirmClearBtn.addEventListener('click', () => {
+            localStorage.removeItem('retirementFormData');
+            location.reload();
+        });
+
+    </script>
+</body>
+</html>
