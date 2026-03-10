@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Ferramentas - CMC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Transição suave para o menu lateral */
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen overflow-hidden">
+
+    <!-- Botão de Menu Mobile (visível apenas em telas pequenas) -->
+    <button id="menuButton" class="fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-md lg:hidden shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </button>
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Menu Lateral (Sidebar) -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-gray-200 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 sidebar-transition flex flex-col shadow-xl lg:shadow-none">
+            
+            <!-- Cabeçalho do Menu: Logo -->
+            <div class="p-6 border-b border-gray-100 flex flex-col items-center">
+                <img 
+                    src="logo_cmc.png" 
+                    alt="Logo CMC" 
+                    class="h-16 mb-4 object-contain"
+                    onerror="this.src='https://placehold.co/200x60?text=Logo+CMC'"
+                >
+                <h2 class="text-lg font-bold text-gray-800 text-center leading-tight">Portal de Ferramentas</h2>
+            </div>
+
+            <!-- Navegação -->
+            <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 px-2">Ferramentas Disponíveis</p>
+                
+                <!-- Primeiro Link Atualizado -->
+                <button onclick="loadTool('https://rhcmc.ct.ws/apps/Simulador_valores/Simulador_valores.html', 'Simulador de Proventos de Aposentadoria', this)"
+                    class="nav-item w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors group">
+                    <div class="w-2 h-2 rounded-full bg-blue-600 mr-3"></div>
+                    <span class="font-medium text-sm text-left">Simulador de Proventos de Aposentadoria</span>
+                </button>
+
+                <button onclick="loadTool('https://rhcmc.ct.ws/apps/Simulador_regra/Simulador_regra.html', 'Simulador de Regras', this)"
+                    class="nav-item w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition-colors group">
+                    <div class="w-2 h-2 rounded-full bg-indigo-600 mr-3"></div>
+                    <span class="font-medium text-sm text-left">Simulador de Regras</span>
+                </button>
+
+                <button onclick="loadTool('https://rhcmc.ct.ws/apps/atualizadora/atualizadora.html', 'Atualização de Salários', this)"
+                    class="nav-item w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-700 transition-colors group">
+                    <div class="w-2 h-2 rounded-full bg-green-600 mr-3"></div>
+                    <span class="font-medium text-sm text-left">Atualização de Salários</span>
+                </button>
+
+                <button onclick="loadTool('https://rhcmc.ct.ws/apps/Gratificacao_especial/Gratificacao_especial.html', 'Gratificação Especial', this)"
+                    class="nav-item w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors group">
+                    <div class="w-2 h-2 rounded-full bg-red-600 mr-3"></div>
+                    <span class="font-medium text-sm text-left">Gratificação Especial</span>
+                </button>
+            </nav>
+
+            <!-- Rodapé do Menu -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50 text-[10px] text-gray-400 text-center">
+                © 2024 Câmara Municipal de Curitiba
+            </div>
+        </aside>
+
+        <!-- Área Principal de Conteúdo -->
+        <main class="flex-1 flex flex-col min-w-0 bg-white relative">
+            
+            <!-- Mensagem de Boas-vindas (Estado Vazio) -->
+            <div id="welcomeMessage" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center z-10 bg-white">
+                <div class="bg-blue-50 p-6 rounded-full mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Bem-vindo ao Portal de Ferramentas</h2>
+                <p class="text-gray-500 max-w-md">Utilize o menu lateral para selecionar o simulador ou calculadora que deseja utilizar no momento.</p>
+            </div>
+
+            <!-- Container do Iframe -->
+            <div id="iframeContainer" class="hidden flex-1 w-full h-full">
+                <iframe
+                    id="toolFrame"
+                    src="about:blank"
+                    class="w-full h-full border-none"
+                    title="Conteúdo da Ferramenta">
+                </iframe>
+            </div>
+
+        </main>
+
+        <!-- Overlay para mobile -->
+        <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuButton = document.getElementById('menuButton');
+        const overlay = document.getElementById('overlay');
+        const iframe = document.getElementById('toolFrame');
+        const iframeContainer = document.getElementById('iframeContainer');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+
+        function toggleMenu() {
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        menuButton.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        function loadTool(url, title, element) {
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'text-blue-800', 'font-bold');
+            });
+
+            element.classList.add('bg-blue-100', 'text-blue-800', 'font-bold');
+            iframe.src = url;
+            welcomeMessage.classList.add('hidden');
+            iframeContainer.classList.remove('hidden');
+
+            if (window.innerWidth < 1024) {
+                toggleMenu();
+            }
+        }
+    </script>
+
+</body>
+</html>
+
