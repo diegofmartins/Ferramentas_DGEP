@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Regras de Aposentadoria - DGEP / IPMC</title>
+    <!-- Importação da fonte Inter para consistência visual -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Identidade Visual Unificada DGEP */
+        :root {
+            --primary-color: #004b8d;
+            --primary-hover: #003a6d;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --bg-light: #f8f9fa;
+            --text-dark: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --white: #ffffff;
+            --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.5;
+            padding: 1.5rem;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Card Principal que engloba o cabeçalho interno */
+        .card {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Cabeçalho Interno do Card */
+        .card-header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-titles h1 {
+            color: #334155;
+            font-size: 1.85rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-titles p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .btn-clear-top {
+            background-color: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-clear-top:hover {
+            background-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 0.75rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            transition: var(--transition);
+            background-color: #fff;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.15);
+        }
+
+        /* Botões Inferiores */
+        .btn-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: var(--white); }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-success { background-color: var(--success-color); color: var(--white); }
+        .btn-success:hover { opacity: 0.9; }
+
+        /* Resultados */
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .result-card {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-left: 6px solid var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .result-card.status-aplicavel { border-left-color: var(--success-color); }
+        .result-card.status-nao-aplicavel { border-left-color: var(--danger-color); opacity: 0.8; }
+        .result-card.vantajosa { 
+            border-left-color: var(--warning-color); 
+            background-color: #fffdf5;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .result-header h3 { font-size: 1.15rem; color: var(--primary-color); }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .tag-vantajosa { background-color: var(--warning-color); color: #000; }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .result-item strong { color: var(--text-dark); display: block; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 2px; }
+
+        .details-list {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+            list-style: none;
+            font-size: 0.85rem;
+            columns: 2;
+        }
+
+        .details-list li { margin-bottom: 0.4rem; color: var(--text-muted); }
+        .details-list li strong { display: inline; text-transform: none; color: var(--text-dark); font-size: 0.85rem; }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding-bottom: 2rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: var(--white); padding: 2rem; border-radius: 12px;
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        .modal-btns { display: flex; gap: 1rem; margin-top: 1.5rem; }
+
+        /* Impressão */
+        #print-container { display: none; }
+        @media print {
+            body > *:not(#print-container) { display: none; }
+            #print-container { display: block; font-family: sans-serif; }
+            .print-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+        }
+
+        @media (max-width: 600px) {
+            .card-header-inner { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .btn-clear-top { width: 100%; }
+            .details-list { columns: 1; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <form id="calc-form" class="card">
+            <!-- Cabeçalho Integrado dentro do Card -->
+            <div class="card-header-inner">
+                <div class="header-titles">
+                    <h1>Simulador de Regras de Aposentadoria</h1>
+                    <p>Baseado na Lei Complementar 133/2021 do IPMC</p>
+                </div>
+                <button type="button" id="limpar" class="btn-clear-top">Limpar Dados</button>
+            </div>
+
+            <h2 class="section-title">Dados de Identificação</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome">
+                </div>
+                <div class="form-group">
+                    <label for="matricula">Matrícula</label>
+                    <input type="text" id="matricula">
+                </div>
+                <div class="form-group">
+                    <label for="dataNasc">Data de Nascimento</label>
+                    <input type="date" id="dataNasc" required>
+                </div>
+                <div class="form-group">
+                    <label for="sexo">Gênero</label>
+                    <select id="sexo" required>
+                        <option value="">Selecione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 2rem;">Histórico Funcional</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="dataIngressoSP">Ingresso no Serviço Público (CMC)</label>
+                    <input type="date" id="dataIngressoSP" required>
+                </div>
+                <div class="form-group">
+                    <label for="dataIngressoCargo">Ingresso no Cargo Atual</label>
+                    <input type="date" id="dataIngressoCargo" required>
+                </div>
+                <div class="form-group">
+                    <label for="averbacoesRgpsDias">Averbações RGPS (INSS) em dias</label>
+                    <input type="number" id="averbacoesRgpsDias" placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="averbacoesSpDias">Averbações Outros Regimes (SP) em dias</label>
+                    <input type="number" id="averbacoesSpDias" placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="afastamentosDias">Afastamentos não computados (dias)</label>
+                    <input type="number" id="afastamentosDias" placeholder="0" min="0">
+                </div>
+            </div>
+            
+            <div class="btn-container">
+                <button type="button" id="calcular" class="btn btn-primary">Simular Projeções</button>
+                <button type="button" id="imprimir" class="btn btn-success" style="display:none">Gerar Relatório PDF</button>
+            </div>
+        </form>
+
+        <div id="loading">Processando cálculos e projeções...</div>
+        
+        <div id="resultados"></div>
+        
+        <footer>
+            versão 2.18. Última atualização em 10/03/2026
+        </footer>
+    </div>
+
+    <!-- Estrutura oculta para Impressão -->
+    <div id="print-container">
+        <div style="text-align:center; margin-bottom:30px; border-bottom:2px solid #000; padding-bottom:10px;">
+            <h2 style="margin:0">Relatório de Simulação de Aposentadoria</h2>
+            <p style="margin:5px 0">IPMC - Lei Complementar 133/2021</p>
+        </div>
+        <div id="relatorio-conteudo"></div>
+    </div>
+    
+    <!-- Modal Confirmação -->
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--danger-color); margin-bottom:1rem">Limpar Dados?</h3>
+            <p>Todas as informações preenchidas e os resultados atuais serão apagados permanentemente.</p>
+            <div class="modal-btns">
+                <button id="modal-cancelar" class="btn" style="background:#eee">Cancelar</button>
+                <button id="modal-confirmar" class="btn btn-primary" style="background:var(--danger-color)">Sim, Limpar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FUNÇÕES DE AUXÍLIO ---
+        function parseDate(str) {
+            if (!str) return null;
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function diffEmDias(d1, d2) {
+            if (!d1 || !d2) return 0;
+            return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        function formatarData(d) {
+            return d ? d.toLocaleDateString('pt-BR') : 'N/A';
+        }
+
+        function formatarTempo(totalDias) {
+            const anos = Math.floor(totalDias / 365);
+            const meses = Math.floor((totalDias % 365) / 30.41);
+            const dias = Math.round((totalDias % 365) % 30.41);
+            let result = [];
+            if (anos > 0) result.push(`${anos}a`);
+            if (meses > 0) result.push(`${meses}m`);
+            if (dias > 0 || result.length === 0) result.push(`${dias}d`);
+            return result.join(' ');
+        }
+
+        const idsCampos = ['nome', 'matricula', 'dataNasc', 'sexo', 'dataIngressoSP', 'dataIngressoCargo', 'averbacoesRgpsDias', 'averbacoesSpDias', 'afastamentosDias'];
+        const DATA_REF_2022 = new Date(2022, 0, 1);
+        const DATA_LIMITE_2003 = new Date(2003, 11, 31);
+        const DATA_LIMITE_2021 = new Date(2021, 11, 31);
+        let ultimoServidor = null, ultimosResultados = [];
+
+        // --- GESTÃO DE CACHE ---
+        function salvarCache() {
+            idsCampos.forEach(id => localStorage.setItem(`dgep_aposent_${id}`, document.getElementById(id).value));
+        }
+        function carregarCache() {
+            idsCampos.forEach(id => {
+                const val = localStorage.getItem(`dgep_aposent_${id}`);
+                if (val) document.getElementById(id).value = val;
+            });
+        }
+
+        // --- LÓGICA DE PROJEÇÃO ---
+        function projetar(servidor, regra) {
+            let proj = {
+                data: new Date(servidor.inicioProjecao),
+                contrib: diffEmDias(servidor.dataIngressoSP, servidor.inicioProjecao) + servidor.averbRgps + servidor.averbSp - servidor.afastamentos,
+                sp: diffEmDias(servidor.dataIngressoSP, servidor.inicioProjecao) + servidor.averbSp - servidor.afastamentos,
+                cargo: diffEmDias(servidor.dataIngressoCargo, servidor.inicioProjecao) - servidor.afastamentos
+            };
+
+            for (let i = 0; i < 18250; i++) { // Limite 50 anos
+                if (i > 0) {
+                    proj.data.setDate(proj.data.getDate() + 1);
+                    proj.contrib++; proj.sp++;
+                    if (proj.data >= servidor.dataIngressoCargo) proj.cargo++;
+                }
+                
+                const idade = Math.floor(diffEmDias(servidor.dataNasc, proj.data) / 365);
+                if (idade >= 75) return { nome: regra.nome, aplicavel: false, motivo: "Atingiu idade compulsória (75 anos)." };
+
+                if (regra.checker(servidor, proj, idade)) {
+                    return {
+                        nome: regra.nome, aplicavel: true, data: new Date(proj.data),
+                        proventos: regra.proventos(servidor),
+                        detalhes: { idade, contrib: proj.contrib, sp: proj.sp, cargo: proj.cargo, pontos: (diffEmDias(servidor.dataNasc, proj.data) + proj.contrib) / 365 }
+                    };
+                }
+            }
+            return { nome: regra.nome, aplicavel: false, motivo: "Requisitos não atingidos em 50 anos." };
+        }
+
+        // --- REGRAS ---
+        const REGRAS_DEF = [
+            {
+                nome: "Regra Geral (Art. 6º)",
+                proventos: () => "Média",
+                checker: (s, p, id) => id >= (s.sexo === 'Masculino' ? 65 : 62) && p.contrib >= 25*365 && p.sp >= 10*365 && p.cargo >= 5*365
+            },
+            {
+                nome: "Pedágio 100% (Art. 11)",
+                proventos: (s) => s.dataIngressoSP <= DATA_LIMITE_2003 ? "Integralidade" : "Média",
+                checker: (s, p, id) => {
+                    if (s.dataIngressoSP > new Date(2022, 0, 1)) return false;
+                    const minC = (s.sexo === 'Masculino' ? 35 : 30) * 365;
+                    const pedagio = Math.max(0, minC - s.tempoEm2022);
+                    return id >= (s.sexo === 'Masculino' ? 60 : 57) && p.contrib >= (minC + pedagio) && p.sp >= 20*365 && p.cargo >= 5*365;
+                }
+            },
+            {
+                nome: "Regra de Pontos (Art. 10)",
+                proventos: (s) => s.dataIngressoSP <= DATA_LIMITE_2003 ? "Integralidade (Inciso I)" : "Média (Inciso II)",
+                checker: (s, p, id) => {
+                    if (s.dataIngressoSP > DATA_LIMITE_2021) return false;
+                    const minId = s.dataIngressoSP <= DATA_LIMITE_2003 ? (s.sexo === 'Masculino' ? 65 : 62) : (s.sexo === 'Masculino' ? 62 : 57);
+                    const minC = (s.sexo === 'Masculino' ? 35 : 30) * 365;
+                    const ptsBase = s.sexo === 'Masculino' ? 98 : 88;
+                    const ptsTeto = s.sexo === 'Masculino' ? 105 : 100;
+                    const ptsExig = Math.min(ptsTeto, ptsBase + Math.max(0, p.data.getFullYear() - 2022));
+                    const ptsAtuais = (diffEmDias(s.dataNasc, p.data) + p.contrib) / 365;
+                    return id >= minId && p.contrib >= minC && p.sp >= 20*365 && p.cargo >= 5*365 && ptsAtuais >= ptsExig;
+                }
+            }
+        ];
+
+        // --- INTERAÇÃO ---
+        document.getElementById('calcular').addEventListener('click', () => {
+            const loader = document.getElementById('loading'), resDiv = document.getElementById('resultados');
+            loader.style.display = 'block'; resDiv.innerHTML = '';
+            
+            setTimeout(() => {
+                try {
+                    const s = {
+                        nome: document.getElementById('nome').value, matricula: document.getElementById('matricula').value,
+                        dataNasc: parseDate(document.getElementById('dataNasc').value),
+                        sexo: document.getElementById('sexo').value,
+                        dataIngressoSP: parseDate(document.getElementById('dataIngressoSP').value),
+                        dataIngressoCargo: parseDate(document.getElementById('dataIngressoCargo').value),
+                        averbRgps: parseInt(document.getElementById('averbacoesRgpsDias').value) || 0,
+                        averbSp: parseInt(document.getElementById('averbacoesSpDias').value) || 0,
+                        afastamentos: parseInt(document.getElementById('afastamentosDias').value) || 0
+                    };
+                    if (!s.dataNasc || !s.dataIngressoSP || !s.sexo) throw new Error("Preencha as datas obrigatórias e o gênero.");
+                    
+                    s.inicioProjecao = new Date(Math.max(s.dataIngressoSP, s.dataIngressoCargo, DATA_REF_2022));
+                    s.tempoEm2022 = diffEmDias(s.dataIngressoSP, DATA_REF_2022) + s.averbRgps + s.averbSp - s.afastamentos;
+
+                    ultimosResultados = REGRAS_DEF.map(r => projetar(s, r));
+                    ultimoServidor = s;
+                    
+                    // Lógica da Mais Vantajosa
+                    const aplic = ultimosResultados.filter(r => r.aplicavel);
+                    if (aplic.length > 0) {
+                        const top = aplic.filter(r => r.proventos.includes("Integral")).sort((a,b) => a.data - b.data)[0] || aplic.sort((a,b) => a.data - b.data)[0];
+                        top.isVantajosa = true;
+                    }
+
+                    resDiv.innerHTML = '<h2>Simulações Processadas</h2>';
+                    ultimosResultados.forEach(r => {
+                        const card = document.createElement('div');
+                        card.className = `result-card ${r.aplicavel ? 'status-aplicavel' : 'status-nao-aplicavel'} ${r.isVantajosa ? 'vantajosa' : ''}`;
+                        
+                        if (r.aplicavel) {
+                            card.innerHTML = `
+                                <div class="result-header">
+                                    <h3>${r.nome}</h3>
+                                    ${r.isVantajosa ? '<span class="tag tag-vantajosa">Mais Vantajosa</span>' : ''}
+                                </div>
+                                <div class="result-grid">
+                                    <div class="result-item"><strong>Previsão</strong>${formatarData(r.data)}</div>
+                                    <div class="result-item"><strong>Proventos</strong>${r.proventos}</div>
+                                    <div class="result-item"><strong>Idade</strong>${r.detalhes.idade} anos</div>
+                                </div>
+                                <ul class="details-list">
+                                    <li><strong>Tempo Contrib:</strong> ${formatarTempo(r.detalhes.contrib)}</li>
+                                    <li><strong>Serviço Público:</strong> ${formatarTempo(r.detalhes.sp)}</li>
+                                    <li><strong>No Cargo:</strong> ${formatarTempo(r.detalhes.cargo)}</li>
+                                    <li><strong>Pontuação:</strong> ${r.detalhes.pontos.toFixed(2)} pts</li>
+                                </ul>`;
+                        } else {
+                            card.innerHTML = `<h3>${r.nome}</h3><p style="font-size:0.9rem; color:var(--danger-color)">${r.motivo}</p>`;
+                        }
+                        resDiv.appendChild(card);
+                    });
+                    document.getElementById('imprimir').style.display = 'inline-flex';
+                } catch (e) { resDiv.innerHTML = `<div class="card" style="border-color:red; color:red">${e.message}</div>`; }
+                loader.style.display = 'none';
+            }, 200);
+        });
+
+        // Eventos de Interface
+        document.getElementById('limpar').onclick = () => document.getElementById('modal-confirmacao').style.display = 'flex';
+        document.getElementById('modal-cancelar').onclick = () => document.getElementById('modal-confirmacao').style.display = 'none';
+        document.getElementById('modal-confirmar').onclick = () => {
+            idsCampos.forEach(id => { document.getElementById(id).value = ''; localStorage.removeItem(`dgep_aposent_${id}`); });
+            document.getElementById('resultados').innerHTML = ''; document.getElementById('imprimir').style.display = 'none';
+            document.getElementById('modal-confirmacao').style.display = 'none';
+        };
+        document.getElementById('imprimir').onclick = () => {
+            const cont = document.getElementById('relatorio-conteudo');
+            cont.innerHTML = `<div style="margin-bottom:20px"><strong>Servidor:</strong> ${ultimoServidor.nome} | <strong>Matrícula:</strong> ${ultimoServidor.matricula}</div>`;
+            ultimosResultados.filter(r => r.aplicavel).forEach(r => {
+                cont.innerHTML += `<div class="print-card"><h3>${r.nome} ${r.isVantajosa ? '(Vantajosa)' : ''}</h3>
+                <p>Data: ${formatarData(r.data)} | Proventos: ${r.proventos} | Idade: ${r.detalhes.idade} anos</p>
+                <p>Tempo total na data: ${formatarTempo(r.detalhes.contrib)}</p></div>`;
+            });
+            window.print();
+        };
+
+        window.onload = carregarCache;
+        idsCampos.forEach(id => document.getElementById(id).onchange = salvarCache);
+
+    </script>
+</body>
+</html>
