@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Gratificação Especial - CMC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; 
+        }
+
+        /* Estilos específicos para impressão */
+        @media print {
+            @page { margin: 0.5cm; size: A4; }
+            body { 
+                background-color: white; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                font-size: 11px; /* Fonte base menor para impressão */
+            }
+            .container-main { 
+                box-shadow: none !important; 
+                border: none !important; 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            input { border: none !important; background: transparent !important; padding: 0 !important; height: auto !important; }
+            .input-box { border: 1px solid #ccc; }
+            
+            /* TÍTULO CENTRALIZADO E MAIOR NA IMPRESSÃO */
+            h1 { 
+                font-size: 24pt !important; 
+                color: #991b1b !important; 
+                margin-bottom: 5px !important; 
+                text-align: center !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            /* Subtítulo centralizado */
+            h1 + p {
+                text-align: center !important;
+                font-size: 10pt !important;
+                width: 100% !important;
+                display: block !important;
+                margin-bottom: 20px !important;
+            }
+
+            h2, h3 { font-size: 12pt !important; margin-top: 10px !important; margin-bottom: 5px !important; }
+            .bg-gray-50 { background-color: white !important; padding: 5px 0 !important; }
+            .bg-blue-50 { background-color: #eff6ff !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            
+            /* Compactação de layout para impressão */
+            .grid-cols-1 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+            .print-full-width { grid-column: span 2; }
+            .print-compact-table td, .print-compact-table th { padding: 4px !important; }
+            
+            /* Ajuste dos inputs numéricos para parecerem texto */
+            input[type="number"] {
+                text-align: right;
+                font-weight: bold;
+            }
+            /* Alinhamento específico para Nome e Matrícula na impressão */
+            #server-name, #server-id {
+                text-align: left !important;
+                font-size: 11px !important;
+                font-weight: bold !important;
+                color: #374151 !important; /* gray-700 */
+                display: block;
+                width: 100%;
+            }
+            #divisor, #base-salary { text-align: left; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen p-4 md:p-8">
+
+    <div class="container-main bg-white p-6 md:p-8 rounded-2xl shadow-lg max-w-5xl mx-auto">
+        
+        <!-- Cabeçalho -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-gray-200 pb-4">
+            <div class="w-full">
+                <h1 class="text-3xl font-bold text-gray-700">Gratificação Especial</h1>
+                <p class="text-gray-500 text-sm mt-1">Simulador de Incorporação Proporcional (RPPS - CMC)</p>
+            </div>
+            <div class="no-print mt-4 sm:mt-0">
+                <button id="clear-data-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                    Limpar Dados
+                </button>
+            </div>
+        </div>
+
+        <!-- Dados do Servidor e Parâmetros Globais -->
+        <div class="mb-6 bg-gray-50 p-4 rounded-xl print-full-width">
+            <h2 class="text-lg font-bold text-red-800 mb-3 border-l-4 border-red-800 pl-3">1. Dados e Parâmetros</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Nome e Matrícula -->
+                <div class="md:col-span-2 space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nome do Servidor</label>
+                        <input type="text" id="server-name" class="form-input w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Matrícula</label>
+                        <input type="text" id="server-id" class="form-input w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Divisor e Salário Base -->
+                <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                        <label class="block text-xs font-bold text-red-800 uppercase tracking-wide mb-1">Divisor (Meses)</label>
+                        <input type="number" id="divisor" max="480" class="form-input w-full text-lg font-bold text-gray-800 p-1 border-b border-gray-300 focus:border-red-500 outline-none" oninput="calculate()">
+                        <span class="text-[10px] text-gray-500">Máximo 480 meses</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                        <label class="block text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">Salário Base (R$)</label>
+                        <input type="text" id="base-salary" placeholder="0,00" class="form-input w-full text-lg font-bold text-gray-800 p-1 border-b border-gray-300 focus:border-blue-500 outline-none money-input" oninput="formatCurrencyInput(this); calculate()">
+                        <span class="text-[10px] text-gray-400">Base p/ Estímulos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="calc-form" onsubmit="event.preventDefault();">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-2">
+                
+                <!-- COLUNA 1: Funções Gratificadas -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center">
+                        <span class="bg-red-100 text-red-800 py-0.5 px-2 rounded text-xs mr-2">2</span>
+                        Funções Gratificadas
+                    </h3>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                        <table class="w-full text-sm text-left print-compact-table">
+                            <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                                <tr>
+                                    <th class="p-3 w-1/4">Função</th>
+                                    <th class="p-3 w-1/4">Valor Ref.</th>
+                                    <th class="p-3 w-1/4 text-center">Meses</th>
+                                    <th class="p-3 w-1/4 text-right">Incorporado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fg-container" class="divide-y divide-gray-100">
+                                <!-- As linhas serão geradas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- COLUNA 2: Estímulos Acadêmicos -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 py-0.5 px-2 rounded text-xs mr-2">3</span>
+                        Estímulos Acadêmicos (%)
+                    </h3>
+                    
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3 no-print">
+                        <p class="text-xs text-blue-800">
+                            Valores calculados sobre o <strong>Salário Base</strong> informado.
+                        </p>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                        <table class="w-full text-sm text-left print-compact-table">
+                            <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                                <tr>
+                                    <!-- AQUI: Ajuste de larguras para dar mais espaço ao texto (40%) e reduzir os números (20%) -->
+                                    <th class="p-3 w-2/5">Nível</th>
+                                    <th class="p-3 w-1/5">Valor Calc.</th>
+                                    <th class="p-3 w-1/5 text-center">Meses</th>
+                                    <th class="p-3 w-1/5 text-right">Incorporado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stimulus-container" class="divide-y divide-gray-100">
+                                <!-- As linhas serão geradas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
+        <!-- Resultados -->
+        <div class="bg-gray-800 text-white p-6 rounded-xl mt-6 shadow-inner mx-auto max-w-lg text-center print-full-width">
+            <div class="flex flex-col items-center justify-center">
+                <div class="mb-2">
+                    <h2 class="text-lg font-medium">Total da Gratificação Especial</h2>
+                    <p class="text-xs text-gray-400">Valor mensal a ser somado ao provento básico</p>
+                </div>
+                <div>
+                    <div id="total-gratification" class="text-3xl font-bold text-green-400">R$ 0,00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão de Imprimir -->
+        <div class="mt-6 text-center no-print">
+            <button onclick="window.print()" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105 inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Imprimir Memória de Cálculo
+            </button>
+        </div>
+
+        <!-- Rodapé Técnico -->
+        <div class="mt-8 pt-4 border-t border-gray-200 text-center print-full-width">
+            <p class="text-[10px] text-gray-400 font-mono">
+                Calculadora v1.5 | Compilado em: <span id="compilation-date"></span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmation-modal" class="fixed inset-0 z-50 items-center justify-center hidden modal-backdrop no-print">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 transform transition-all scale-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Confirmar Limpeza</h3>
+            <p class="text-sm text-gray-600 mb-6">Você tem certeza que deseja limpar todos os dados e o histórico salvo? Esta ação não pode ser desfeita.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-clear-btn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">Cancelar</button>
+                <button id="confirm-clear-btn" class="px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 font-bold transition-colors">Sim, Limpar Tudo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Lógico -->
+    <script>
+        // --- DADOS E CONSTANTES ---
+        const fgData = [
+            { id: 'fg3', name: 'FG-3 (FGTL)', value: 200.00 },
+            { id: 'fg4', name: 'FG-4', value: 1518.01 },
+            { id: 'fg5', name: 'FG-5', value: 3035.98 },
+            { id: 'fg6', name: 'FG-6', value: 7727.99 },
+            { id: 'fg7', name: 'FG-7', value: 13247.97 },
+            { id: 'fg8', name: 'FG-8', value: 16007.98 }
+        ];
+
+        const stimulusData = [
+            { id: 'stim10', name: 'Pós-Graduação', percent: 0.10 },
+            { id: 'stim15', name: 'Mestrado', percent: 0.15 },
+            { id: 'stim20', name: 'Doutorado', percent: 0.20 },
+            { id: 'stim30', name: 'Graduação (Esp.)', percent: 0.30 }
+        ];
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFGs();
+            renderStimuli();
+            loadFormData(); // Carrega dados salvos
+            
+            // Set compilation date
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('compilation-date').textContent = `${dateStr} às ${timeStr}`;
+
+            // Attach auto-save listener to inputs loaded statically
+            attachAutoSave();
+        });
+
+        // --- RENDERIZAÇÃO DA UI ---
+        function renderFGs() {
+            const container = document.getElementById('fg-container');
+            let html = '';
+            fgData.forEach(fg => {
+                html += `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 font-medium text-gray-700 text-sm border-b border-gray-50">${fg.name}</td>
+                    <td class="p-3 text-gray-500 text-xs border-b border-gray-50">R$ ${fg.value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 border-b border-gray-50">
+                        <input type="number" id="months-${fg.id}" min="0" placeholder="0" 
+                            class="form-input w-full p-1.5 border border-gray-200 rounded text-center focus:border-red-500 focus:ring-1 focus:ring-red-200 outline-none transition-all text-sm font-semibold text-gray-800"
+                            oninput="calculate(); saveFormData()">
+                    </td>
+                    <td class="p-3 text-right font-bold text-gray-800 text-sm border-b border-gray-50" id="result-${fg.id}">R$ 0,00</td>
+                </tr>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderStimuli() {
+            const container = document.getElementById('stimulus-container');
+            let html = '';
+            stimulusData.forEach(st => {
+                html += `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 font-medium text-gray-700 text-sm border-b border-gray-50">
+                        ${st.name} <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1 rounded ml-1">${(st.percent * 100).toFixed(0)}%</span>
+                    </td>
+                    <td class="p-3 text-gray-500 text-xs border-b border-gray-50" id="ref-${st.id}">R$ 0,00</td>
+                    <td class="p-3 border-b border-gray-50">
+                        <input type="number" id="months-${st.id}" min="0" placeholder="0" 
+                            class="form-input w-full p-1.5 border border-gray-200 rounded text-center focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all text-sm font-semibold text-gray-800"
+                            oninput="calculate(); saveFormData()">
+                    </td>
+                    <td class="p-3 text-right font-bold text-gray-800 text-sm border-b border-gray-50" id="result-${st.id}">R$ 0,00</td>
+                </tr>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- LÓGICA DE CÁLCULO ---
+        function calculate() {
+            const divisorInput = document.getElementById('divisor');
+            let divisor = parseFloat(divisorInput.value);
+            
+            // Validação de Máximo de 480 meses
+            if (divisor > 480) {
+                divisor = 480;
+                divisorInput.value = 480;
+            }
+
+            // Se divisor inválido, zera tudo
+            if (!divisor || divisor <= 0) {
+                 document.querySelectorAll('[id^="result-"]').forEach(el => el.textContent = 'R$ 0,00');
+                 document.getElementById('total-gratification').textContent = 'R$ 0,00';
+                 return;
+            }
+
+            let totalIncorporated = 0;
+
+            // FGs Fixas
+            fgData.forEach(fg => {
+                const monthsInput = document.getElementById(`months-${fg.id}`);
+                const months = parseFloat(monthsInput.value) || 0;
+                
+                const partial = (months / divisor) * fg.value;
+                
+                document.getElementById(`result-${fg.id}`).textContent = formatMoney(partial);
+                if(months > 0) totalIncorporated += partial;
+                
+                const row = monthsInput.closest('tr');
+                if(months > 0) {
+                    row.classList.add('bg-red-50');
+                    row.classList.remove('hover:bg-gray-50');
+                } else {
+                    row.classList.remove('bg-red-50');
+                    row.classList.add('hover:bg-gray-50');
+                }
+            });
+
+            // Estímulos
+            const baseSalaryRaw = document.getElementById('base-salary').value;
+            const baseSalary = parseMoney(baseSalaryRaw);
+
+            stimulusData.forEach(st => {
+                const refValue = baseSalary * st.percent;
+                document.getElementById(`ref-${st.id}`).textContent = formatMoney(refValue);
+
+                const monthsInput = document.getElementById(`months-${st.id}`);
+                const months = parseFloat(monthsInput.value) || 0;
+
+                const partial = (months / divisor) * refValue;
+                
+                document.getElementById(`result-${st.id}`).textContent = formatMoney(partial);
+                if(months > 0) totalIncorporated += partial;
+
+                const row = monthsInput.closest('tr');
+                if(months > 0) {
+                    row.classList.add('bg-blue-50');
+                    row.classList.remove('hover:bg-gray-50');
+                } else {
+                    row.classList.remove('bg-blue-50');
+                    row.classList.add('hover:bg-gray-50');
+                }
+            });
+
+            document.getElementById('total-gratification').textContent = formatMoney(totalIncorporated);
+        }
+
+        // --- PERSISTÊNCIA DE DADOS (LOCALSTORAGE) ---
+        function attachAutoSave() {
+            // Inputs estáticos
+            const staticInputs = ['server-name', 'server-id', 'divisor', 'base-salary'];
+            staticInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('input', saveFormData);
+            });
+        }
+
+        function saveFormData() {
+            const data = {
+                serverName: document.getElementById('server-name').value,
+                serverId: document.getElementById('server-id').value,
+                divisor: document.getElementById('divisor').value,
+                baseSalary: document.getElementById('base-salary').value,
+                fgs: {},
+                stimuli: {}
+            };
+
+            // Salva FGs
+            fgData.forEach(fg => {
+                data.fgs[fg.id] = document.getElementById(`months-${fg.id}`).value;
+            });
+
+            // Salva Estímulos
+            stimulusData.forEach(st => {
+                data.stimuli[st.id] = document.getElementById(`months-${st.id}`).value;
+            });
+
+            localStorage.setItem('gratificacaoEspecialData', JSON.stringify(data));
+        }
+
+        function loadFormData() {
+            const json = localStorage.getItem('gratificacaoEspecialData');
+            if (!json) return;
+
+            try {
+                const data = JSON.parse(json);
+                if(data.serverName) document.getElementById('server-name').value = data.serverName;
+                if(data.serverId) document.getElementById('server-id').value = data.serverId;
+                
+                // Só carrega se existir, senão mantém vazio (novo padrão)
+                if(data.divisor) document.getElementById('divisor').value = data.divisor;
+                
+                if(data.baseSalary) document.getElementById('base-salary').value = data.baseSalary;
+
+                if(data.fgs) {
+                    for (const [id, val] of Object.entries(data.fgs)) {
+                        const el = document.getElementById(`months-${id}`);
+                        if(el) el.value = val;
+                    }
+                }
+
+                if(data.stimuli) {
+                    for (const [id, val] of Object.entries(data.stimuli)) {
+                        const el = document.getElementById(`months-${id}`);
+                        if(el) el.value = val;
+                    }
+                }
+                
+                // Recalcula tudo com os dados carregados
+                calculate();
+
+            } catch (e) {
+                console.error("Erro ao carregar dados", e);
+            }
+        }
+
+        // --- MODAL DE LIMPEZA ---
+        const modal = document.getElementById('confirmation-modal');
+        const clearBtn = document.getElementById('clear-data-btn');
+        const cancelBtn = document.getElementById('cancel-clear-btn');
+        const confirmBtn = document.getElementById('confirm-clear-btn');
+
+        clearBtn.addEventListener('click', () => { modal.classList.remove('hidden'); modal.classList.add('flex'); });
+        cancelBtn.addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); });
+        
+        confirmBtn.addEventListener('click', () => {
+            localStorage.removeItem('gratificacaoEspecialData');
+            document.getElementById('calc-form').reset();
+            
+            // Limpa inputs fora do form principal também
+            document.getElementById('server-name').value = '';
+            document.getElementById('server-id').value = '';
+            document.getElementById('base-salary').value = '';
+            document.getElementById('divisor').value = ''; // Limpa totalmente
+
+            // Zera visualmente
+            document.querySelectorAll('tr').forEach(tr => {
+                tr.classList.remove('bg-red-50', 'bg-blue-50');
+                tr.classList.add('hover:bg-gray-50');
+            });
+            calculate();
+
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        });
+
+
+        // --- UTILITÁRIOS ---
+        function formatMoney(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function parseMoney(valueStr) {
+            if (!valueStr) return 0;
+            return parseFloat(valueStr.replace(/\./g, '').replace(',', '.')) || 0;
+        }
+
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/\D/g, '');
+            value = (parseInt(value) / 100).toFixed(2) + '';
+            value = value.replace('.', ',');
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = value === 'NaN' ? '' : value;
+        }
+    </script>
+</body>
+</html>
